@@ -1482,8 +1482,8 @@ const DEBUG_PANEL_CSS = `
     max-height: min(720px, 80dvh);
     flex-direction: column;
     background: var(--bg-panel);
-    border-bottom: 1px solid var(--border);
-    box-shadow: 0 10px 28px rgba(0,0,0,0.10);
+    border-bottom: 0.5px solid var(--dsw-alias-border-l2, var(--border));
+    box-shadow: var(--dsw-elevation-prominent, 0 10px 28px rgba(0,0,0,0.10));
     color: var(--text);
   }
   .debug-panel .is-ok { color: var(--dbg-ok); }
@@ -1499,7 +1499,7 @@ const DEBUG_PANEL_CSS = `
     gap: 12px;
     min-width: 0;
     padding: 8px 16px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 0.5px solid var(--dsw-alias-border-l2, var(--border));
     font-size: 12px;
   }
   .debug-panel-heading {
@@ -1528,8 +1528,8 @@ const DEBUG_PANEL_CSS = `
     flex-shrink: 0;
     margin-left: auto;
     padding: 2px 8px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
+    border: 0.5px solid var(--dsw-alias-border-l3, var(--border));
+    border-radius: var(--dsw-radius-xs, 4px);
     background: transparent;
     color: var(--text-muted);
     cursor: pointer;
@@ -1596,7 +1596,7 @@ const DEBUG_PANEL_CSS = `
     gap: 6px;
     padding: 4px 8px;
     border-left: 2px solid currentColor;
-    border-radius: 4px;
+    border-radius: var(--dsw-radius-xs, 4px);
     background: color-mix(in srgb, currentColor 8%, var(--bg-panel));
   }
   .debug-issue > svg {
@@ -1637,7 +1637,7 @@ const DEBUG_PANEL_CSS = `
   .debug-col-sessions {
     margin-left: 20px;
     padding-left: 20px;
-    border-left: 1px solid var(--border);
+    border-left: 0.5px solid var(--dsw-alias-border-l2, var(--border));
   }
   .debug-list,
   .debug-block {
@@ -1711,7 +1711,7 @@ const DEBUG_PANEL_CSS = `
     align-items: center;
     padding: 0 6px;
     border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
-    border-radius: 9px;
+    border-radius: var(--dsw-radius-md, 12px);
     font-family: var(--font-mono);
     font-size: 11px;
     line-height: 16px;
@@ -1727,7 +1727,7 @@ const DEBUG_PANEL_CSS = `
     align-items: center;
     padding: 0 4px;
     border: 1px solid currentColor;
-    border-radius: 3px;
+    border-radius: var(--dsw-radius-xs, 4px);
     background-clip: padding-box;
     font: 600 10px/14px var(--font-mono);
     white-space: nowrap;
@@ -1780,7 +1780,7 @@ const DEBUG_PANEL_CSS = `
     align-items: center;
     column-gap: 8px;
     padding: 0 4px;
-    border-radius: 4px;
+    border-radius: var(--dsw-radius-xs, 4px);
     font-size: 11px;
   }
   .debug-page-row.debug-list-head {
@@ -1873,7 +1873,7 @@ const DEBUG_PANEL_CSS = `
     box-sizing: border-box;
     align-items: center;
     justify-content: center;
-    border-radius: 3px;
+    border-radius: var(--dsw-radius-xs, 4px);
   }
   .debug-slot.is-empty {
     border: 1px dotted var(--border);
@@ -2078,7 +2078,7 @@ const DEBUG_PANEL_CSS = `
     align-items: center;
     column-gap: 6px;
     padding: 0 4px;
-    border-radius: 4px;
+    border-radius: var(--dsw-radius-xs, 4px);
   }
   .debug-row.debug-list-head {
     min-height: 18px;
@@ -2131,8 +2131,8 @@ const DEBUG_PANEL_CSS = `
     left: 4px;
     width: 8px;
     height: 8px;
-    border-bottom: 1px solid var(--border);
-    border-left: 1px solid var(--border);
+    border-bottom: 0.5px solid var(--dsw-alias-border-l2, var(--border));
+    border-left: 0.5px solid var(--dsw-alias-border-l2, var(--border));
   }
   .debug-row-name {
     min-width: 0;
@@ -2221,7 +2221,7 @@ const DEBUG_PANEL_CSS = `
     .debug-col-server {
       margin-top: 10px;
       padding-top: 10px;
-      border-top: 1px solid var(--border);
+      border-top: 0.5px solid var(--dsw-alias-border-l2, var(--border));
     }
     .debug-col-server,
     .debug-col-sessions {

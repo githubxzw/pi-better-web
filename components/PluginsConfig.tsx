@@ -150,9 +150,9 @@ function findInstalledPackage(
 
 function statusColor(status: PluginPackageInfo["status"]): string {
   if (status === "loaded") return "var(--accent)";
-  if (status === "installed") return "#f59e0b";
+  if (status === "installed") return "var(--dsw-alias-state-warn-primary, #f59e0b)";
   if (status === "disabled") return "var(--text-dim)";
-  return "#ef4444";
+  return "var(--dsw-alias-state-error-primary, #ef4444)";
 }
 
 function ResourceList({ pkg }: { pkg: PluginPackageInfo }) {
@@ -372,7 +372,7 @@ function PackageDetail({
                   padding: "1px 5px",
                   borderRadius: 3,
                   background: "rgba(245,158,11,0.12)",
-                  color: "#d97706",
+                  color: "var(--dsw-alias-state-warn-primary, #d97706)",
                 }}
               >
                 {t("i18n.filtered")}
@@ -487,7 +487,7 @@ function PackageDetail({
             )}
           </div>
           {updateError && (
-            <span style={{ fontSize: 12, color: "#ef4444" }}>{updateError}</span>
+            <span style={{ fontSize: 12, color: "var(--dsw-alias-state-error-primary, #ef4444)" }}>{updateError}</span>
           )}
         </ConfigDetailGridRow>
         {/* The title is the source; npm:<name> already names the package. */}
@@ -523,7 +523,7 @@ function PackageDetail({
         </div>
       )}
       {actionError && (
-        <div style={{ fontSize: 12, color: "#ef4444", whiteSpace: "pre-wrap" }}>
+        <div style={{ fontSize: 12, color: "var(--dsw-alias-state-error-primary, #ef4444)", whiteSpace: "pre-wrap" }}>
           {actionError}
         </div>
       )}

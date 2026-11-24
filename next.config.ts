@@ -17,6 +17,9 @@ try {
 const gfmAutolinkEmailLoader = join(configDir, "lib/gfm-autolink-email-loader.cjs");
 
 const nextConfig: NextConfig = {
+  // The floating dev-tools badge is a Next.js development-only overlay (the
+  // round logo at the sidebar's foot), not a feature of the app: off.
+  devIndicators: false,
   outputFileTracingRoot: configDir,
   experimental: {
     // proxy.ts matches /api/:path*, and Next buffers the request body whenever

@@ -178,10 +178,10 @@ export function ModelSelector({
         width: "100%",
         minWidth: 0,
         height: 34,
-        padding: "0 9px",
+        padding: "0 10px",
         overflow: "hidden",
-        border: "1px solid var(--border)",
-        borderRadius: 5,
+        border: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
+        borderRadius: "var(--dsw-radius-sm, 8)",
         background: locked ? "var(--bg-panel)" : "var(--bg)",
         color: locked ? "var(--text-dim)" : "var(--text)",
         cursor: locked ? "default" : "pointer",
@@ -192,19 +192,22 @@ export function ModelSelector({
         display: "flex",
         alignItems: "center",
         justifyContent: isMobile ? "flex-start" : undefined,
-        gap: 6,
+        gap: 4,
         width: isMobile ? "100%" : undefined,
-        maxWidth: isMobile ? "100%" : 220,
-        // As tall as ChatInput's other controls: 44px on a phone.
-        height: isMobile ? 44 : 32,
-        padding: isMobile ? "8px 10px" : "8px 12px",
+        maxWidth: isMobile ? "100%" : 360,
+        // A Harness model chip (ModelSelect.module.css `.trigger`): 28px, a
+        // 4px gap, 0 4px 0 8px padding, an 8px radius, 13px on a 20px line.
+        // On a phone it grows to ChatInput's 44px control height.
+        height: isMobile ? 44 : 28,
+        padding: isMobile ? "8px 10px" : "0 4px 0 8px",
         overflow: "hidden",
         border: "none",
-        borderRadius: 9,
+        borderRadius: 8,
         background: open ? "var(--bg-hover)" : "none",
         color: "var(--text-muted)",
         cursor: locked ? "not-allowed" : "pointer",
-        fontSize: 12,
+        fontSize: isMobile ? 12 : 13,
+        lineHeight: isMobile ? undefined : "20px",
         opacity: locked ? 0.5 : 1,
         transition: "background 0.12s, color 0.12s",
       };
@@ -326,10 +329,15 @@ export function ModelSelector({
               flexDirection: "column",
               maxHeight,
               overflow: "hidden",
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              background: "var(--bg)",
-              boxShadow: openAbove ? "0 -4px 16px rgba(0,0,0,0.10)" : "0 4px 16px rgba(0,0,0,0.10)",
+              /* The DSH menu treatment (.sidebar-menu in app/dsh-theme.css):
+                 a translucent surface over a blurred backdrop on a hairline,
+                 floating on the prominent elevation instead of a boxed panel. */
+              border: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
+              borderRadius: "var(--dsw-radius-md, 12)",
+              background: "var(--dsw-specific-menu, var(--bg))",
+              WebkitBackdropFilter: "var(--dsw-menu-backdrop-filter, none)",
+              backdropFilter: "var(--dsw-menu-backdrop-filter, none)",
+              boxShadow: "var(--dsw-elevation-prominent, 0 4px 16px rgba(0,0,0,0.10))",
             }}
           >
             {onShowAll && (
@@ -341,11 +349,11 @@ export function ModelSelector({
                     aria-pressed={showAll === all}
                     onClick={() => { if (showAll !== all) switchScope(); }}
                     style={{
-                      padding: "2px 7px",
-                      border: "1px solid",
-                      borderColor: showAll === all ? "var(--border)" : "transparent",
-                      borderRadius: 4,
-                      background: showAll === all ? "var(--bg-hover)" : "none",
+                      padding: "2px 8px",
+                      border: "0.5px solid",
+                      borderColor: showAll === all ? "var(--dsw-alias-border-l2, var(--border))" : "transparent",
+                      borderRadius: "var(--dsw-radius-sm, 8)",
+                      background: showAll === all ? "var(--dsw-alias-interactive-bg-hover, var(--bg-hover))" : "none",
                       color: showAll === all ? "var(--text)" : "var(--text-muted)",
                       cursor: "pointer",
                       fontSize: 11,
@@ -358,7 +366,7 @@ export function ModelSelector({
               </div>
             )}
             {showFilter && (
-              <div style={{ flexShrink: 0, padding: "6px 8px", borderBottom: "1px solid var(--border)" }}>
+              <div style={{ flexShrink: 0, padding: "6px 8px", borderBottom: "0.5px solid var(--dsw-alias-border-l2, var(--border))" }}>
                 <input
                   value={filter}
                   onChange={(event) => setFilter(event.target.value)}
@@ -380,8 +388,8 @@ export function ModelSelector({
                     width: "100%",
                     minWidth: isMobile ? 0 : 220,
                     padding: "5px 8px",
-                    border: "1px solid var(--border)",
-                    borderRadius: 5,
+                    border: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
+                    borderRadius: "var(--dsw-radius-sm, 8)",
                     outline: "none",
                     background: "var(--bg)",
                     color: "var(--text)",
@@ -410,7 +418,7 @@ export function ModelSelector({
                   {modelsByProvider.length > 1 && (
                     <div
                       title={group.providerName === group.provider ? undefined : group.provider}
-                      style={{ padding: "6px 12px 4px", borderTop: index > 0 || onClear ? "1px solid var(--border)" : "none", color: "var(--text-dim)", fontSize: 10, fontWeight: 600, letterSpacing: 0, textTransform: group.providerName === group.provider ? "uppercase" : "none" }}
+                      style={{ padding: "6px 12px 4px", borderTop: index > 0 || onClear ? "0.5px solid var(--dsw-alias-border-l2, var(--border))" : "none", color: "var(--text-dim)", fontSize: 10, fontWeight: 600, letterSpacing: 0, textTransform: group.providerName === group.provider ? "uppercase" : "none" }}
                     >
                       {group.providerName}
                     </div>

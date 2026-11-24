@@ -2,7 +2,10 @@
 
 import { useSyncExternalStore } from "react";
 
-export const CHAT_CONTENT_WIDTH_DEFAULT = 820;
+/* 920px is DeepSeek Harness' own ceiling for the conversation column
+   (--dsh-chat-content-width clamps at 920px), so the reading measure starts
+   where DSH's does. The slider still narrows it to 820px. */
+export const CHAT_CONTENT_WIDTH_DEFAULT = 920;
 export const CHAT_CONTENT_WIDTH_MIN = 820;
 export const CHAT_CONTENT_WIDTH_MAX = 2000;
 export const CHAT_CONTENT_WIDTH_STORAGE_KEY = "pi-chat-content-width";
@@ -25,7 +28,9 @@ let appearance: ChatAppearance | null = null;
 const listeners = new Set<() => void>();
 
 export function clampChatContentWidth(value: unknown): number {
-  const width = Number(value);
+  /* A missing preference arrives as null from localStorage; without this it
+     would coerce to 0 and clamp up to the minimum instead of the default. */
+  const width = value === null || value === undefined || value === "" ? NaN : Number(value);
   if (!Number.isFinite(width)) return CHAT_CONTENT_WIDTH_DEFAULT;
   return Math.max(CHAT_CONTENT_WIDTH_MIN, Math.min(CHAT_CONTENT_WIDTH_MAX, Math.round(width)));
 }

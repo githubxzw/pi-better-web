@@ -31,6 +31,7 @@ interface Props {
 export function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab, onReorderTab }: Props) {
   const { t } = useI18n();
   const [hoveredClose, setHoveredClose] = useState<string | null>(null);
+  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
   // The strip has no scrollbar (globals.css): a vertical wheel scrolls it
   // sideways, and an opened or selected tab is brought into view.
   const listRef = useHorizontalStrip<HTMLDivElement>('[role="tab"][aria-selected="true"]', `${tabs.length}\n${activeTabId}`);
@@ -47,7 +48,10 @@ export function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab, onReorderTa
         // of the bar (--top-bar-height), squeezing the tabs or clipping their tops (#1225).
         display: "flex",
         alignItems: "stretch",
-        background: "var(--bg-panel)",
+        // DSH's tab bar is a flat surface: the wrapper paints it and draws the
+        // hairline; the tabs are rounded chips in it, not boxed cells.
+        background: "transparent",
+        padding: "0 4px",
         overflowX: "auto",
         overflowY: "hidden",
         flexShrink: 0,
@@ -107,6 +111,8 @@ export function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab, onReorderTa
               }
             }}
             onClick={() => onSelectTab(tab.id)}
+            onMouseEnter={() => setHoveredTab(tab.id)}
+            onMouseLeave={() => setHoveredTab(null)}
             onMouseDown={(e) => {
               if (e.button === 1) e.preventDefault();
             }}
@@ -120,16 +126,19 @@ export function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab, onReorderTa
               display: "flex",
               alignItems: "center",
               gap: 6,
-              paddingLeft: 12,
-              paddingRight: 6,
-              borderRight: "1px solid var(--border)",
-              background: isActive ? "var(--bg)" : "var(--bg-panel)",
+              paddingLeft: 10,
+              paddingRight: 4,
+              margin: "4px 0",
+              borderRadius: "var(--dsw-radius-sm, 8)",
+              background: isActive
+                ? "var(--dsw-specific-sidebar-nav-item-active, var(--bg-selected))"
+                : hoveredTab === tab.id ? "var(--dsw-alias-interactive-bg-hover, var(--bg-hover))" : "transparent",
               cursor: "pointer",
-              fontSize: 12,
+              fontSize: 13,
               color: isActive ? "var(--text)" : "var(--text-muted)",
               whiteSpace: "nowrap",
-              maxWidth: 180,
-              minWidth: 80,
+              maxWidth: 184,
+              minWidth: 84,
               flexShrink: 0,
               userSelect: "none",
               transition: "background 0.1s, color 0.1s",
@@ -171,10 +180,12 @@ export function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab, onReorderTa
               onMouseLeave={() => setHoveredClose(null)}
               style={{
                 display: "flex", alignItems: "center", justifyContent: "center",
-                width: 24, height: 24,
-                background: hoveredClose === tab.id ? "var(--bg-hover)" : "transparent",
+                // A finger's 32px on a phone or touch screen (globals.css sets the
+                // variable there); 24px fits the 36px bar on a desktop.
+                width: "var(--tabbar-close-size, 24px)", height: "var(--tabbar-close-size, 24px)",
+                background: hoveredClose === tab.id ? "var(--dsw-alias-interactive-bg-hover, var(--bg-hover))" : "transparent",
                 border: "none",
-                borderRadius: 4,
+                borderRadius: "var(--dsw-radius-sm, 8)",
                 color: hoveredClose === tab.id ? "var(--text)" : "var(--text-dim)",
                 cursor: "pointer",
                 padding: 0,

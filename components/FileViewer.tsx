@@ -107,7 +107,7 @@ const FILE_LINE_NUMBER_STYLE: CSSProperties = {
   textAlign: "right",
   color: "var(--text-dim)",
   background: "var(--bg-panel)",
-  borderRight: "1px solid var(--border)",
+  borderRight: "0.5px solid var(--dsw-alias-border-l2, var(--border))",
   fontFamily: "var(--font-mono)",
   fontWeight: "var(--font-mono-weight)",
   fontSize: 11,
@@ -497,8 +497,8 @@ function DiffView({
                 color: "var(--text-dim)",
                 background: "var(--bg-panel)",
                 fontSize: 11,
-                borderTop: "1px solid var(--border)",
-                borderBottom: "1px solid var(--border)",
+                borderTop: "0.5px solid var(--dsw-alias-border-l2, var(--border))",
+                borderBottom: "0.5px solid var(--dsw-alias-border-l2, var(--border))",
               }}
             >
               {seg.count === null ? "⋯" : `⋯ ${diffGapLabel(seg.count, t)}`}
@@ -516,7 +516,7 @@ function DiffView({
           const prefix =
             line.type === "added" ? "+" : line.type === "removed" ? "-" : " ";
           const prefixColor =
-            line.type === "added" ? "#4ade80" : line.type === "removed" ? "#f87171" : "var(--text-dim)";
+            line.type === "added" ? "var(--dsw-static-green-400, #4ade80)" : line.type === "removed" ? "var(--dsw-static-red-400, #f87171)" : "var(--text-dim)";
 
           return (
             <div
@@ -691,7 +691,7 @@ function ImageViewer({ filePath, cwd, sourceSessionId, watchEnabled = true }: Pr
           alignItems: "center",
           gap: 12,
           padding: "4px 16px",
-          borderBottom: "1px solid var(--border)",
+          borderBottom: "0.5px solid var(--dsw-alias-border-l2, var(--border))",
           fontSize: 11,
           color: "var(--text-dim)",
           background: "var(--bg)",
@@ -706,16 +706,16 @@ function ImageViewer({ filePath, cwd, sourceSessionId, watchEnabled = true }: Pr
         {formatSizeStr && <span>{formatSizeStr}</span>}
         <span
           title={watching ? t("i18n.liveSync") : t("i18n.notWatching")}
-          style={{ display: "flex", alignItems: "center", gap: 4, color: watching ? "#4ade80" : "var(--text-dim)" }}
+          style={{ display: "flex", alignItems: "center", gap: 4, color: watching ? "var(--dsw-static-green-400, #4ade80)" : "var(--text-dim)" }}
         >
           <span
             style={{
               width: 7,
               height: 7,
               borderRadius: "50%",
-              background: watching ? "#4ade80" : "var(--border)",
+              background: watching ? "var(--dsw-static-green-400, #4ade80)" : "var(--border)",
               display: "inline-block",
-              boxShadow: watching ? "0 0 4px #4ade80" : "none",
+              boxShadow: watching ? "0 0 4px var(--dsw-static-green-400, #4ade80)" : "none",
             }}
           />
           {watching ? "live" : "static"}
@@ -738,7 +738,7 @@ function ImageViewer({ filePath, cwd, sourceSessionId, watchEnabled = true }: Pr
         }}
       >
         {error ? (
-          <div style={{ color: "#f87171", fontSize: 13 }}>{error}</div>
+          <div style={{ color: "var(--dsw-static-red-400, #f87171)", fontSize: 13 }}>{error}</div>
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -753,7 +753,7 @@ function ImageViewer({ filePath, cwd, sourceSessionId, watchEnabled = true }: Pr
               maxWidth: "100%",
               maxHeight: "100%",
               objectFit: "contain",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              boxShadow: "var(--dsw-elevation-soft, 0 2px 8px rgba(0,0,0,0.15))",
             }}
           />
         )}
@@ -872,7 +872,7 @@ function AudioViewer({ filePath, cwd, sourceSessionId, watchEnabled = true }: Pr
           alignItems: "center",
           gap: 12,
           padding: "4px 16px",
-          borderBottom: "1px solid var(--border)",
+          borderBottom: "0.5px solid var(--dsw-alias-border-l2, var(--border))",
           fontSize: 11,
           color: "var(--text-dim)",
           background: "var(--bg)",
@@ -887,16 +887,16 @@ function AudioViewer({ filePath, cwd, sourceSessionId, watchEnabled = true }: Pr
         {size != null && <span>{formatSize(size)}</span>}
         <span
           title={watching ? t("i18n.liveSync") : t("i18n.notWatching")}
-          style={{ display: "flex", alignItems: "center", gap: 4, color: watching ? "#4ade80" : "var(--text-dim)" }}
+          style={{ display: "flex", alignItems: "center", gap: 4, color: watching ? "var(--dsw-static-green-400, #4ade80)" : "var(--text-dim)" }}
         >
           <span
             style={{
               width: 7,
               height: 7,
               borderRadius: "50%",
-              background: watching ? "#4ade80" : "var(--border)",
+              background: watching ? "var(--dsw-static-green-400, #4ade80)" : "var(--border)",
               display: "inline-block",
-              boxShadow: watching ? "0 0 4px #4ade80" : "none",
+              boxShadow: watching ? "0 0 4px var(--dsw-static-green-400, #4ade80)" : "none",
             }}
           />
           {watching ? "live" : "static"}
@@ -915,7 +915,7 @@ function AudioViewer({ filePath, cwd, sourceSessionId, watchEnabled = true }: Pr
       >
         <div style={{ width: "min(680px, 100%)" }}>
           {error && (
-            <div style={{ color: "#f87171", fontSize: 13, marginBottom: 12, textAlign: "center" }}>
+            <div style={{ color: "var(--dsw-static-red-400, #f87171)", fontSize: 13, marginBottom: 12, textAlign: "center" }}>
               {error}
             </div>
           )}
@@ -1036,7 +1036,7 @@ function VideoViewer({ filePath, cwd, sourceSessionId, watchEnabled = true }: Pr
           alignItems: "center",
           gap: 12,
           padding: "4px 16px",
-          borderBottom: "1px solid var(--border)",
+          borderBottom: "0.5px solid var(--dsw-alias-border-l2, var(--border))",
           fontSize: 11,
           color: "var(--text-dim)",
           background: "var(--bg)",
@@ -1051,16 +1051,16 @@ function VideoViewer({ filePath, cwd, sourceSessionId, watchEnabled = true }: Pr
         {size != null && <span>{formatSize(size)}</span>}
         <span
           title={watching ? t("i18n.liveSync") : t("i18n.notWatching")}
-          style={{ display: "flex", alignItems: "center", gap: 4, color: watching ? "#4ade80" : "var(--text-dim)" }}
+          style={{ display: "flex", alignItems: "center", gap: 4, color: watching ? "var(--dsw-static-green-400, #4ade80)" : "var(--text-dim)" }}
         >
           <span
             style={{
               width: 7,
               height: 7,
               borderRadius: "50%",
-              background: watching ? "#4ade80" : "var(--border)",
+              background: watching ? "var(--dsw-static-green-400, #4ade80)" : "var(--border)",
               display: "inline-block",
-              boxShadow: watching ? "0 0 4px #4ade80" : "none",
+              boxShadow: watching ? "0 0 4px var(--dsw-static-green-400, #4ade80)" : "none",
             }}
           />
           {watching ? "live" : "static"}
@@ -1080,7 +1080,7 @@ function VideoViewer({ filePath, cwd, sourceSessionId, watchEnabled = true }: Pr
       >
         <div style={{ width: "min(960px, 100%)", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 0 }}>
           {error && (
-            <div style={{ color: "#f87171", fontSize: 13, marginBottom: 12, textAlign: "center" }}>
+            <div style={{ color: "var(--dsw-static-red-400, #f87171)", fontSize: 13, marginBottom: 12, textAlign: "center" }}>
               {error}
             </div>
           )}
@@ -1233,7 +1233,7 @@ function DocumentViewer({ filePath, cwd, sourceSessionId, initialPage, watchEnab
           alignItems: "center",
           gap: 12,
           padding: "4px 16px",
-          borderBottom: "1px solid var(--border)",
+          borderBottom: "0.5px solid var(--dsw-alias-border-l2, var(--border))",
           fontSize: 11,
           color: "var(--text-dim)",
           background: "var(--bg)",
@@ -1248,16 +1248,16 @@ function DocumentViewer({ filePath, cwd, sourceSessionId, initialPage, watchEnab
         <DownloadLink filePath={filePath} sourceSessionId={sourceSessionId} />
         <span
           title={watching ? t("i18n.liveSync") : t("i18n.notWatching")}
-          style={{ display: "flex", alignItems: "center", gap: 4, color: watching ? "#4ade80" : "var(--text-dim)", flexShrink: 0 }}
+          style={{ display: "flex", alignItems: "center", gap: 4, color: watching ? "var(--dsw-static-green-400, #4ade80)" : "var(--text-dim)", flexShrink: 0 }}
         >
           <span
             style={{
               width: 7,
               height: 7,
               borderRadius: "50%",
-              background: watching ? "#4ade80" : "var(--border)",
+              background: watching ? "var(--dsw-static-green-400, #4ade80)" : "var(--border)",
               display: "inline-block",
-              boxShadow: watching ? "0 0 4px #4ade80" : "none",
+              boxShadow: watching ? "0 0 4px var(--dsw-static-green-400, #4ade80)" : "none",
             }}
           />
           {watching ? "live" : "static"}
@@ -1265,7 +1265,7 @@ function DocumentViewer({ filePath, cwd, sourceSessionId, initialPage, watchEnab
       </div>
       <div style={{ flex: 1, minHeight: 0, background: "var(--bg-panel)" }}>
         {error ? (
-          <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, color: "#f87171", fontSize: 13, textAlign: "center" }}>
+          <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, color: "var(--dsw-static-red-400, #f87171)", fontSize: 13, textAlign: "center" }}>
             {error}
           </div>
         ) : (
@@ -1877,7 +1877,7 @@ function TextFileViewer({
 
   if (error && !isDeletedDiff) {
     return (
-      <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#f87171", fontSize: 13 }}>
+      <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--dsw-static-red-400, #f87171)", fontSize: 13 }}>
         {error}
       </div>
     );
@@ -1909,7 +1909,7 @@ function TextFileViewer({
           alignItems: "center",
           gap: 8,
           padding: "5px 12px",
-          borderBottom: "1px solid var(--border)",
+          borderBottom: "0.5px solid var(--dsw-alias-border-l2, var(--border))",
           fontSize: 11,
           color: "var(--text-dim)",
           background: "var(--bg)",
@@ -1927,8 +1927,8 @@ function TextFileViewer({
             aria-label={watching ? t("i18n.liveSync") : t("i18n.notWatching")}
             className="file-viewer-live-indicator"
             style={{
-              background: watching ? "#4ade80" : "var(--border)",
-              boxShadow: watching ? "0 0 4px #4ade80" : "none",
+              background: watching ? "var(--dsw-static-green-400, #4ade80)" : "var(--border)",
+              boxShadow: watching ? "0 0 4px var(--dsw-static-green-400, #4ade80)" : "none",
             }}
           />
         )}
@@ -2023,8 +2023,8 @@ function TextFileViewer({
             justifyContent: "center",
             gap: 10,
             padding: "5px 8px",
-            border: "1px solid var(--border)",
-            borderRadius: 6,
+            border: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
+            borderRadius: "var(--dsw-radius-sm, 8px)",
             color: "var(--text-dim)",
             fontSize: 11,
           }}
@@ -2103,7 +2103,7 @@ function TextFileViewer({
               href={getFileApiUrl(filePath, "download", sourceSessionId)}
               download={getFileName(filePath)}
               className="file-viewer-mode-button"
-              style={{ display: "inline-flex", alignItems: "center", border: "1px solid var(--border)", borderRadius: 6, color: "var(--text)", textDecoration: "none" }}
+              style={{ display: "inline-flex", alignItems: "center", border: "0.5px solid var(--dsw-alias-border-l3, var(--border))", borderRadius: "var(--dsw-radius-sm, 8px)", color: "var(--text)", textDecoration: "none" }}
             >
               {t("files.download")}
             </a>

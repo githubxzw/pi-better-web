@@ -770,7 +770,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
   const { ui: uiFontFamily, uiWeight } = useFontPreferences();
   const isMobile = useIsMobile();
   // The controls row under the composer: a finger's 44px on a phone.
-  const controlSize = isMobile ? 44 : 32;
+  const controlSize = isMobile ? 44 : 28;
   const enterSendMode = useEnterSendMode();
   const [value, setValue] = useState(() => (draftKey ? getDraft(draftKey)?.value ?? "" : ""));
   const [toolDropdownOpen, setToolDropdownOpen] = useState(false);
@@ -2022,7 +2022,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
         {retryInfo && (
           <div style={{
             marginBottom: 8, padding: "5px 10px",
-            background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.25)",
+            background: "color-mix(in srgb, var(--dsw-alias-state-warn-primary, #eab308) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--dsw-alias-state-warn-primary, #eab308) 25%, transparent)",
             borderRadius: 6, fontSize: 12, color: "rgba(180,130,0,0.9)",
             display: "flex", alignItems: "center", gap: 6,
           }}>
@@ -2036,7 +2036,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
         {compactResultText && (
           <div style={{
             marginBottom: 8, padding: "5px 10px",
-            background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.24)",
+            background: "color-mix(in srgb, var(--dsw-alias-state-success-primary, #10b981) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--dsw-alias-state-success-primary, #10b981) 24%, transparent)",
             borderRadius: 6, fontSize: 12, color: "rgba(5,150,105,0.95)",
             display: "flex", alignItems: "center", gap: 6,
           }}>
@@ -2055,10 +2055,10 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
               gap: 6,
               marginBottom: 8,
               padding: onDismissCompactError ? "3px 3px 3px 10px" : "7px 10px",
-              background: "rgba(239,68,68,0.07)",
-              border: "1px solid rgba(239,68,68,0.3)",
+              background: "color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef4444) 7%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef4444) 30%, transparent)",
               borderRadius: 6,
-              color: "#ef4444",
+              color: "var(--dsw-alias-state-error-primary, #ef4444)",
               fontFamily: "var(--font-mono)",
               fontSize: 12,
               lineHeight: 1.5,
@@ -2455,11 +2455,14 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
               alignItems: stackedComposer ? "stretch" : "center",
               background: "var(--bg)",
               border: compact ? "none" : `1px solid ${bashMode ? "var(--tool-bg)" : isStreaming && (onSteer || onFollowUp)
-                ? "rgba(234,179,8,0.4)"
+                ? "color-mix(in srgb, var(--dsw-alias-state-warn-primary, #eab308) 40%, transparent)"
                 : "color-mix(in srgb, var(--border) 70%, transparent)"}`,
-              borderRadius: compact ? 0 : 14,
-              padding: compact ? 0 : isMobile ? "6px 6px 6px 12px" : "10px 10px 10px 14px",
-              boxShadow: compact ? "none" : "0 1px 2px rgba(15,23,42,0.04), 0 8px 24px -12px rgba(15,23,42,0.10)",
+              /* DeepSeek Harness' composer card: a 28px panel that floats on a
+                 hairline stroke plus a soft ambient shadow rather than a boxed
+                 14px input. */
+              borderRadius: compact ? 0 : 28,
+              padding: compact ? 0 : isMobile ? "8px 8px 8px 14px" : "12px 12px 12px 16px",
+              boxShadow: compact ? "none" : "var(--dsw-elevation-soft, 0 1px 2px rgba(15,23,42,0.04), 0 8px 24px -12px rgba(15,23,42,0.10))",
               transition: "border-color 0.15s, background 0.15s, box-shadow 0.15s",
             } as React.CSSProperties}
           >
@@ -2550,8 +2553,8 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                   style={{
                     display: "flex", alignItems: "center", gap: 5,
                     padding: "7px 12px",
-                    background: canQueueStreamingMessage ? "rgba(234,179,8,0.12)" : "none",
-                    border: "1px solid rgba(234,179,8,0.35)",
+                    background: canQueueStreamingMessage ? "color-mix(in srgb, var(--dsw-alias-state-warn-primary, #eab308) 12%, transparent)" : "none",
+                    border: "1px solid color-mix(in srgb, var(--dsw-alias-state-warn-primary, #eab308) 35%, transparent)",
                     borderRadius: 8,
                     color: canQueueStreamingMessage ? "rgba(180,130,0,1)" : "var(--text-dim)",
                     cursor: canQueueStreamingMessage ? "pointer" : "not-allowed",
@@ -2603,16 +2606,18 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                 alignSelf: "flex-end",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                 // Mobile: icon-only so the placeholder and draft keep the width.
-                ...(isMobile ? { width: 36, height: 36, padding: 0 } : { padding: "7px 14px" }),
-                background: (value.trim() || attachedImages.length) ? "var(--accent)" : "var(--bg-panel)",
+                ...(isMobile ? { width: 34, height: 34, padding: 0 } : { padding: "0 16px", minHeight: 34 }),
+                /* DeepSeek Harness' send affordance: the info-blue pill, white
+                   label, no border, a hairline shadow instead of a drop shadow. */
+                background: (value.trim() || attachedImages.length) ? "var(--dsw-alias-button-info-fill, var(--accent))" : "var(--dsw-alias-interactive-bg-hover, var(--bg-panel))",
                 border: "none",
-                borderRadius: 8,
+                borderRadius: 999,
                 color: (value.trim() || attachedImages.length) ? "var(--accent-contrast)" : "var(--text-dim)",
                 cursor: (value.trim() || attachedImages.length) ? "pointer" : "not-allowed",
                 fontSize: 13,
-                fontWeight: 600,
+                fontWeight: 500,
                 letterSpacing: "-0.01em",
-                boxShadow: (value.trim() || attachedImages.length) ? "0 1px 3px color-mix(in srgb, var(--accent) 25%, transparent)" : "none",
+                boxShadow: "none",
                 transition: "background 0.15s, box-shadow 0.15s",
               }}
             >
@@ -2635,15 +2640,15 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
 
         {/* Bottom bar: left | center (context) | right */}
         {!compact && <div className="chat-input-controls" style={{
-          marginTop: isMobile ? 4 : 8,
+          marginTop: isMobile ? 4 : 6,
           display: isMobile ? "grid" : "flex",
           gridTemplateColumns: isMobile ? "minmax(0, 1fr) auto" : undefined,
           alignItems: "center",
-          gap: 6,
+          gap: 8,
         }}>
 
           {/* LEFT: attach + model selector (idle) or steer/followup toggle (streaming) */}
-          <div style={{ flex: isMobile ? "1 1 auto" : "0 0 auto", minWidth: 0, display: "flex", alignItems: "center", gap: 2 }}>
+          <div style={{ flex: isMobile ? "1 1 auto" : "0 0 auto", minWidth: 0, display: "flex", alignItems: "center", gap: 4 }}>
             <button
               onClick={() => fileInputRef.current?.click()}
              title={t("chat.attachFiles")}
@@ -2651,7 +2656,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                 flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
                 width: controlSize, height: controlSize, padding: 0,
                 background: "none", border: "none",
-                borderRadius: 9,
+                borderRadius: 8,
                 color: attachedImages.length ? "var(--accent)" : "var(--text-muted)",
                 cursor: "pointer",
                 opacity: 1,
@@ -2718,10 +2723,10 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                   justifyContent: "center",
                   width: "100%",
                   height: controlSize,
-                  padding: "8px 10px",
+                  padding: "0 8px",
                   background: "none",
                   border: "none",
-                  borderRadius: 9,
+                  borderRadius: 8,
                   color: "var(--text-muted)",
                   cursor: controlsMenuOpen ? "default" : "pointer",
                   fontSize: 12,
@@ -2775,12 +2780,12 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                   aria-label={t("chat.changeReasoningLabel")}
                   style={{
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-                    padding: isMobile ? "0 10px" : "8px 12px",
+                    padding: isMobile ? "0 10px" : "0 8px",
                     width: isMobile ? "auto" : undefined,
                     height: controlSize,
                     background: thinkingDropdownOpen ? "var(--bg-hover)" : "none",
                     border: "none",
-                    borderRadius: 9,
+                    borderRadius: 8,
                     color: "var(--text-muted)",
                     cursor: "pointer",
                     fontSize: 12,
@@ -2873,12 +2878,12 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                   aria-label={t("chat.changeToolPreset")}
                   style={{
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-                    padding: isMobile ? "0 10px" : "8px 12px",
+                    padding: isMobile ? "0 10px" : "0 8px",
                     width: isMobile ? "auto" : undefined,
                     height: controlSize,
                     background: toolDropdownOpen ? "var(--bg-hover)" : "none",
                     border: "none",
-                    borderRadius: 9,
+                    borderRadius: 8,
                     color: "var(--text-muted)",
                     cursor: isStreaming ? "not-allowed" : "pointer",
                     fontSize: 12,
@@ -2955,24 +2960,24 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                   onClick={isCompacting ? onAbortCompaction : (e) => { if (!isStrayClick(e)) onCompact(); }}
                   style={{
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-                    padding: isMobile ? "0 10px" : "8px 12px",
+                    padding: isMobile ? "0 10px" : "0 8px",
                     width: isMobile ? "auto" : undefined,
                     height: controlSize,
-                    background: isCompacting ? "rgba(239,68,68,0.08)" : "none",
+                    background: isCompacting ? "color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef4444) 8%, transparent)" : "none",
                     border: "none",
-                    borderRadius: 9,
-                    color: isCompacting ? "#ef4444" : "var(--text-muted)",
+                    borderRadius: 8,
+                    color: isCompacting ? "var(--dsw-alias-state-error-primary, #ef4444)" : "var(--text-muted)",
                     cursor: "pointer",
                     fontSize: 12,
                     transition: "background 0.12s, color 0.12s",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = isCompacting ? "rgba(239,68,68,0.16)" : "var(--bg-hover)";
-                    e.currentTarget.style.color = isCompacting ? "#ef4444" : "var(--text)";
+                    e.currentTarget.style.background = isCompacting ? "color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef4444) 16%, transparent)" : "var(--bg-hover)";
+                    e.currentTarget.style.color = isCompacting ? "var(--dsw-alias-state-error-primary, #ef4444)" : "var(--text)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = isCompacting ? "rgba(239,68,68,0.08)" : "none";
-                    e.currentTarget.style.color = isCompacting ? "#ef4444" : "var(--text-muted)";
+                    e.currentTarget.style.background = isCompacting ? "color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef4444) 8%, transparent)" : "none";
+                    e.currentTarget.style.color = isCompacting ? "var(--dsw-alias-state-error-primary, #ef4444)" : "var(--text-muted)";
                   }}
                    title={isCompacting ? t("chat.stopCompaction") : t("chat.compactContext")}
                    aria-label={isCompacting ? t("chat.stopCompaction") : t("chat.compactContext")}
@@ -2995,19 +3000,19 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                  title={t("chat.stopAgent")}
                 style={{
                   display: "flex", alignItems: "center", gap: 6,
-                  padding: "8px 14px",
+                  padding: "0 14px",
                   height: controlSize,
-                  background: "rgba(239,68,68,0.08)",
-                  border: "1px solid rgba(239,68,68,0.3)",
-                  borderRadius: 9,
-                  color: "#ef4444",
+                  background: "color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef4444) 8%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef4444) 30%, transparent)",
+                  borderRadius: 8,
+                  color: "var(--dsw-alias-state-error-primary, #ef4444)",
                   cursor: "pointer",
                   fontSize: 12, fontWeight: 600,
                   whiteSpace: "nowrap", letterSpacing: "-0.01em",
                   transition: "background 0.12s",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.16)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef4444) 16%, transparent)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef4444) 8%, transparent)"; }}
               >
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                   <rect x="1.5" y="1.5" width="7" height="7" rx="1.5" fill="currentColor" />
@@ -3028,7 +3033,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
                   padding: 0,
                   background: "none",
                   border: "none",
-                  borderRadius: 9,
+                  borderRadius: 8,
                   color: soundEnabled ? "var(--text-muted)" : "var(--text-dim)",
                   cursor: "pointer",
                   opacity: soundEnabled ? 1 : 0.55,

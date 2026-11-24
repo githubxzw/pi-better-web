@@ -73,7 +73,7 @@ export function AgentMiniStrip({ rootSession, members, selectedSessionId, runnin
         // The right padding sits outside the scroller, so the current chip kept in view never touches the edge.
         padding: "0 8px",
         background: "var(--bg-panel)",
-        borderBottom: "1px solid var(--border)",
+        borderBottom: "0.5px solid var(--dsw-alias-border-l2, var(--border))",
         flexShrink: 0,
       }}
     >
@@ -171,8 +171,8 @@ function Chip({ label, title, current, tabStop, icon, running, onFocus, onClick 
         maxWidth: 200,
         height: 24,
         padding: "0 9px",
-        border: `1px solid ${current ? "var(--accent)" : "var(--border)"}`,
-        borderRadius: 12,
+        border: `0.5px solid ${current ? "var(--accent)" : "var(--dsw-alias-border-l2, var(--border))"}`,
+        borderRadius: "var(--dsw-radius-md, 12px)",
         background: current ? "var(--bg-selected)" : undefined,
         fontSize: 11,
         fontWeight: current ? 600 : 500,

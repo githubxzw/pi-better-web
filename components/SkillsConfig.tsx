@@ -317,7 +317,7 @@ function SkillDetail({
             )}
           </div>
           {updateError && (
-            <span style={{ fontSize: 12, color: "#ef4444" }}>{updateError}</span>
+            <span style={{ fontSize: 12, color: "var(--dsw-alias-state-error-primary, #ef4444)" }}>{updateError}</span>
           )}
         </ConfigField>
       )}
@@ -1072,7 +1072,7 @@ export function SkillsConfig({
             Object.values(updateStatuses).filter(
               (status) => status.state === "update-available",
             ).length > 0 && (
-              <span style={{ fontSize: 12, color: "#d97706" }}>
+              <span style={{ fontSize: 12, color: "var(--dsw-alias-state-warn-primary, #d97706)" }}>
                 {
                   Object.values(updateStatuses).filter(
                     (status) => status.state === "update-available",

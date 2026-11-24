@@ -213,11 +213,15 @@ export function saveShowIgnoredFiles(
  * the browser saved it folded. The tabs layout ignores it.
  */
 export function loadFilesCollapsed(storage: StorageLike | null = getBrowserStorage()): boolean {
-  if (!storage) return false;
+  // The folder list is a drawer beside the sessions, not the column itself:
+  // closed until it is asked for, as the harness keeps its sidebar to one
+  // list. An explicit choice is always honoured.
+  if (!storage) return true;
   try {
-    return storage.getItem(FILES_COLLAPSED_STORAGE_KEY) === "true";
+    const stored = storage.getItem(FILES_COLLAPSED_STORAGE_KEY);
+    return stored === null ? true : stored === "true";
   } catch {
-    return false;
+    return true;
   }
 }
 

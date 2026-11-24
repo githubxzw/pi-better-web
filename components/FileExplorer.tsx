@@ -144,13 +144,16 @@ const GIT_STATUS_KEYS: Record<GitFileStatusKind, string> = {
   conflict: "files.conflict",
 };
 
+/* DSH's semantic hues: amber for edits, green for new, red for gone, blue for
+   moves — the static (theme-independent) end of each ramp, so the badges read
+   on both the light and dark file panel. */
 const GIT_STATUS_COLORS: Record<GitFileStatusKind, string> = {
-  modified: "#d6a84b",
-  added: "#4ade80",
-  deleted: "#f87171",
-  renamed: "#60a5fa",
-  untracked: "#4ade80",
-  conflict: "#f87171",
+  modified: "var(--dsw-static-amber-400, #d6a84b)",
+  added: "var(--dsw-static-green-400, #4ade80)",
+  deleted: "var(--dsw-static-red-400, #f87171)",
+  renamed: "var(--dsw-alias-link, #60a5fa)",
+  untracked: "var(--dsw-static-green-400, #4ade80)",
+  conflict: "var(--dsw-static-red-400, #f87171)",
 };
 
 function GitStatusBadge({ status, t }: { status: GitFileStatus; t: Translate }) {
@@ -381,7 +384,7 @@ export function TreeNode({
               : "transparent",
           outline: isDropTarget ? "1px dashed var(--accent)" : "none",
           outlineOffset: -1,
-          borderRadius: 4,
+          borderRadius: "var(--dsw-radius-xs, 4px)",
           userSelect: "none",
         }}
       >
@@ -428,7 +431,7 @@ export function TreeNode({
             aria-label={t("files.newlyUploaded")}
             style={{ width: 14, height: 14, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
           >
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#3b82f6" }} />
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--dsw-alias-link, #3b82f6)" }} />
           </span>
         )}
         {!hovered && !node.isDir && gitStatus && (
@@ -447,7 +450,7 @@ export function TreeNode({
               justifyContent: "center",
             }}
           >
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#d6a84b" }} />
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--dsw-static-amber-400, #d6a84b)" }} />
           </span>
         )}
         {loading && (
@@ -474,8 +477,8 @@ export function TreeNode({
               padding: "0 8px",
               height: "calc(var(--file-row-height) - 4px)",
               background: "var(--bg-panel)",
-              border: "1px solid var(--border)",
-              borderRadius: 4,
+              border: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
+              borderRadius: "var(--dsw-radius-xs, 4px)",
               color: "var(--accent)",
               cursor: "pointer",
               fontSize: 11,
@@ -505,8 +508,8 @@ export function TreeNode({
               padding: "0 5px",
               height: "calc(var(--file-row-height) - 4px)",
               background: "var(--bg-panel)",
-              border: "1px solid var(--border)",
-              borderRadius: 4,
+              border: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
+              borderRadius: "var(--dsw-radius-xs, 4px)",
               color: "var(--text-muted)",
               cursor: "pointer",
               fontSize: 11,
@@ -540,7 +543,7 @@ export function TreeNode({
         >
           <span style={{ wordBreak: "break-all" }}>{t("files.outsideLink", { target: pendingLinkTarget })}</span>
           {node.outsideLinkEncloses && (
-            <span style={{ color: "#f59e0b" }}>{t("files.outsideLinkEncloses")}</span>
+            <span style={{ color: "var(--dsw-alias-state-warn-primary, #f59e0b)" }}>{t("files.outsideLinkEncloses")}</span>
           )}
           <button
             type="button"
@@ -551,8 +554,8 @@ export function TreeNode({
               height: "calc(var(--file-row-height) - 4px)",
               padding: "0 8px",
               background: "var(--bg-panel)",
-              border: "1px solid var(--border)",
-              borderRadius: 4,
+              border: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
+              borderRadius: "var(--dsw-radius-xs, 4px)",
               color: "var(--accent)",
               cursor: allowingLink ? "default" : "pointer",
               opacity: allowingLink ? 0.6 : 1,
@@ -651,7 +654,7 @@ function ChangeRow({
         height: "var(--file-row-height)",
         cursor: "pointer",
         background: hovered ? "var(--bg-hover)" : "transparent",
-        borderRadius: 4,
+        borderRadius: "var(--dsw-radius-xs, 4px)",
         userSelect: "none",
         position: "relative",
       }}
@@ -717,8 +720,8 @@ function ChangeRow({
             padding: "0 8px",
             height: "calc(var(--file-row-height) - 4px)",
             background: "var(--bg-panel)",
-            border: "1px solid var(--border)",
-            borderRadius: 4,
+            border: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
+            borderRadius: "var(--dsw-radius-xs, 4px)",
             color: "var(--accent)",
             cursor: "pointer",
             fontSize: 11,
@@ -761,7 +764,7 @@ function ChangesFolderRow({
         height: "var(--file-row-height)",
         cursor: "pointer",
         background: hovered ? "var(--bg-hover)" : "transparent",
-        borderRadius: 4,
+        borderRadius: "var(--dsw-radius-xs, 4px)",
         userSelect: "none",
       }}
     >
@@ -1330,23 +1333,23 @@ export const FileExplorer = forwardRef<FileExplorerHandle, Props>(function FileE
         )}
 
         {pendingConflict && (
-          <div role="alert" style={{ padding: 7, border: "1px solid color-mix(in srgb, #f59e0b 55%, var(--border))", borderRadius: 4, background: "color-mix(in srgb, #f59e0b 9%, var(--bg-panel))" }}>
+          <div role="alert" style={{ padding: 7, border: "1px solid color-mix(in srgb, var(--dsw-alias-state-warn-primary, #f59e0b) 55%, var(--border))", borderRadius: "var(--dsw-radius-xs, 4px)", background: "color-mix(in srgb, var(--dsw-alias-state-warn-primary, #f59e0b) 9%, var(--bg-panel))" }}>
             <div style={{ fontSize: 11, color: "var(--text)", lineHeight: 1.35, overflowWrap: "anywhere" }}>
               {t("files.conflictSummary", { count: pendingConflict.conflicts.length, countSuffix: pendingConflict.conflicts.length === 1 ? "" : "s", files: pendingConflict.conflicts.join(", ") })}
             </div>
             {pendingConflict.nonReplaceable.length > 0 && (
-              <div style={{ marginTop: 3, fontSize: 10, color: "#f59e0b", lineHeight: 1.35, overflowWrap: "anywhere" }}>
+              <div style={{ marginTop: 3, fontSize: 10, color: "var(--dsw-alias-state-warn-primary, #f59e0b)", lineHeight: 1.35, overflowWrap: "anywhere" }}>
                 {t("files.cannotReplace", { files: pendingConflict.nonReplaceable.join(", ") })}
               </div>
             )}
             <div style={{ display: "flex", gap: 5, marginTop: 7 }}>
-              <button type="button" onClick={() => void performUpload(pendingConflict.files, "overwrite", pendingConflict.directory)} style={{ height: 22, padding: "0 7px", border: "1px solid #ef4444", borderRadius: 4, background: "transparent", color: "#ef4444", cursor: "pointer", fontSize: 10 }}>
+              <button type="button" onClick={() => void performUpload(pendingConflict.files, "overwrite", pendingConflict.directory)} style={{ height: 22, padding: "0 7px", border: "1px solid var(--dsw-alias-state-error-primary, #ef4444)", borderRadius: "var(--dsw-radius-xs, 4px)", background: "transparent", color: "var(--dsw-alias-state-error-primary, #ef4444)", cursor: "pointer", fontSize: 10 }}>
                 {t("files.replace")}
               </button>
-              <button type="button" onClick={() => void performUpload(pendingConflict.files, "skip", pendingConflict.directory)} style={{ height: 22, padding: "0 7px", border: "1px solid var(--border)", borderRadius: 4, background: "var(--bg-panel)", color: "var(--text)", cursor: "pointer", fontSize: 10 }}>
+              <button type="button" onClick={() => void performUpload(pendingConflict.files, "skip", pendingConflict.directory)} style={{ height: 22, padding: "0 7px", border: "0.5px solid var(--dsw-alias-border-l3, var(--border))", borderRadius: "var(--dsw-radius-xs, 4px)", background: "var(--bg-panel)", color: "var(--text)", cursor: "pointer", fontSize: 10 }}>
                 {t("files.skipExisting")}
               </button>
-              <button type="button" onClick={() => setPendingConflict(null)} style={{ height: 22, padding: "0 7px", border: "none", borderRadius: 4, background: "transparent", color: "var(--text-muted)", cursor: "pointer", fontSize: 10 }}>
+              <button type="button" onClick={() => setPendingConflict(null)} style={{ height: 22, padding: "0 7px", border: "none", borderRadius: "var(--dsw-radius-xs, 4px)", background: "transparent", color: "var(--text-muted)", cursor: "pointer", fontSize: 10 }}>
                 {t("files.cancel")}
               </button>
             </div>
@@ -1398,7 +1401,7 @@ export const FileExplorer = forwardRef<FileExplorerHandle, Props>(function FileE
                   onClick={addUploadedFilesToChat}
                   title={uploadSummary.uploaded.length === 1 ? t("files.addUploadedFile") : t("files.addAllUploadedFiles")}
                   aria-label={uploadSummary.uploaded.length === 1 ? t("files.addUploadedFile") : t("files.addAllUploadedFiles")}
-                  style={{ height: 22, padding: "0 7px", display: "flex", alignItems: "center", justifyContent: "center", gap: 4, flexShrink: 0, border: "1px solid var(--border)", borderRadius: 4, background: "var(--bg-panel)", color: "var(--accent)", cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}
+                  style={{ height: 22, padding: "0 7px", display: "flex", alignItems: "center", justifyContent: "center", gap: 4, flexShrink: 0, border: "0.5px solid var(--dsw-alias-border-l3, var(--border))", borderRadius: "var(--dsw-radius-xs, 4px)", background: "var(--bg-panel)", color: "var(--accent)", cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}
                 >
                   <MentionIcon />
                   {t("files.mention")}
@@ -1440,7 +1443,7 @@ export const FileExplorer = forwardRef<FileExplorerHandle, Props>(function FileE
             }}
             placeholder={t("sidebar.searchFilesPlaceholder")}
             aria-label={t("sidebar.searchFiles")}
-            style={{ width: "100%", boxSizing: "border-box", padding: "6px 24px", border: "1px solid var(--border)", borderRadius: 8, outline: "none", background: "var(--bg)", color: "var(--text)", fontFamily: "var(--font-mono)", fontSize: 11 }}
+            style={{ width: "100%", boxSizing: "border-box", padding: "6px 24px", border: "0.5px solid var(--dsw-alias-border-l3, var(--border))", borderRadius: "var(--dsw-radius-sm, 8px)", outline: "none", background: "var(--bg)", color: "var(--text)", fontFamily: "var(--font-mono)", fontSize: 11 }}
           />
           {searchQuery && (
             <button
@@ -1448,7 +1451,7 @@ export const FileExplorer = forwardRef<FileExplorerHandle, Props>(function FileE
               onClick={() => setSearchQuery("")}
               title={t("sidebar.clearSearch")}
               aria-label={t("sidebar.clearSearch")}
-              style={{ position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, padding: 0, border: "none", borderRadius: 4, background: "none", color: "var(--text-dim)", cursor: "pointer" }}
+              style={{ position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, padding: 0, border: "none", borderRadius: "var(--dsw-radius-xs, 4px)", background: "none", color: "var(--text-dim)", cursor: "pointer" }}
               onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "var(--text-dim)"; }}
             >
@@ -1527,7 +1530,7 @@ export const FileExplorer = forwardRef<FileExplorerHandle, Props>(function FileE
                 height: 22,
                 padding: 0,
                 border: "none",
-                borderRadius: 4,
+                borderRadius: "var(--dsw-radius-xs, 4px)",
                 background: "transparent",
                 color: "var(--text-dim)",
                 cursor: "pointer",

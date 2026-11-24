@@ -17,7 +17,8 @@ import { BranchNavigator, hasSessionBranches } from "./BranchNavigator";
 import { SystemPromptPanel } from "./SystemPromptPanel";
 import { ToolDefinitionsPanel } from "./ToolDefinitionsPanel";
 import { AgentMiniStrip } from "./AgentMiniStrip";
-import { AgentSessionPanel } from "./AgentSessionPanel";
+import { AgentSessionPanel, sessionTitle } from "./AgentSessionPanel";
+import { TopPanelCloseButton } from "./TopPanelCloseButton";
 import { DebugPanel, DebugPanelBoundary } from "./DebugPanel";
 import { SessionChatPanel } from "./SessionChatPanel";
 import { TerminalPanel } from "./TerminalPanel";
@@ -339,6 +340,48 @@ export function AppShell() {
   useEffect(() => {
     setMobileSidebarReady(true);
   }, []);
+  // A rightward drag from the phone's left edge opens the drawer, as a native app's
+  // would. Observing only: nothing is prevented or captured, so a vertical scroll
+  // that merely starts at the edge still scrolls, and the drawer's own rows keep
+  // their long-press drag. Only the chat's surface gets the gesture (not the file
+  // panel, not a dialog over it), and the hamburger still does the same.
+  useEffect(() => {
+    if (!isMobile) return;
+    const EDGE_PX = 24;
+    const OPEN_PX = 48;
+    let pointerId: number | null = null;
+    let startX = 0;
+    let startY = 0;
+    const onDown = (event: PointerEvent) => {
+      if (sidebarOpen || rightPanelOpen || !event.isPrimary) return;
+      if (document.querySelector('[aria-modal="true"]')) return;
+      if (event.clientX > EDGE_PX) return;
+      pointerId = event.pointerId;
+      startX = event.clientX;
+      startY = event.clientY;
+    };
+    const onMove = (event: PointerEvent) => {
+      if (pointerId === null || event.pointerId !== pointerId) return;
+      const dx = event.clientX - startX;
+      const dy = event.clientY - startY;
+      if (dx < 0 || Math.abs(dy) > Math.abs(dx)) { pointerId = null; return; }
+      if (dx >= OPEN_PX) {
+        pointerId = null;
+        setSidebarOpen(true);
+      }
+    };
+    const onEnd = () => { pointerId = null; };
+    window.addEventListener("pointerdown", onDown, true);
+    window.addEventListener("pointermove", onMove, true);
+    window.addEventListener("pointerup", onEnd, true);
+    window.addEventListener("pointercancel", onEnd, true);
+    return () => {
+      window.removeEventListener("pointerdown", onDown, true);
+      window.removeEventListener("pointermove", onMove, true);
+      window.removeEventListener("pointerup", onEnd, true);
+      window.removeEventListener("pointercancel", onEnd, true);
+    };
+  }, [isMobile, sidebarOpen, rightPanelOpen]);
   useEffect(() => {
     if (!rightPanelOpen) return;
     reclampSidebarWidth();
@@ -571,10 +614,11 @@ export function AppShell() {
     const update = () => {
       const topBarRect = topBarRef.current!.getBoundingClientRect();
       if (activeTopPanel === "agents") {
+        // A floating card like the full-width ones: 8px in from the chat column's edges.
         setTopPanelPos({
           top: topBarRect.bottom,
-          left: topBarRect.left,
-          width: Math.min(AGENT_PANEL_WIDTH, topBarRect.width),
+          left: topBarRect.left + 8,
+          width: Math.min(AGENT_PANEL_WIDTH, topBarRect.width - 16),
         });
         return;
       }
@@ -585,6 +629,53 @@ export function AppShell() {
     ro.observe(topBarRef.current);
     return () => ro.disconnect();
   }, [activeTopPanel, isMobile]);
+
+  // The dropdown panels (everything but Debug, which stays while the chat runs and keeps its own
+  // Escape) go away on their own: a pointer down anywhere but inside one or on a control that opens
+  // one, and Escape. Those controls carry `data-top-panel-trigger`: skipping them matters, since
+  // the pointer down comes before the click that toggles, and closing first would reopen the panel.
+  // Escape is read on `document`, after whatever is nearer (a delete confirmation, ChatInput stopping
+  // a run) and before the window's Stop shortcut, which a handled Escape skips. Not the panel's: the
+  // Escape that ends an IME composition, and one that belongs to a dialog over the page.
+  // The control that opened the dropdown, while it holds the focus: the × and Escape give it back
+  // once the panel is gone (focusIfLost), as the Debug panel's do for its button.
+  const topPanelTriggerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const active = document.activeElement;
+    topPanelTriggerRef.current = active instanceof HTMLElement && active.hasAttribute("data-top-panel-trigger")
+      ? active
+      : null;
+  }, [activeTopPanel]);
+
+  const closeTopPanel = useCallback(() => {
+    const trigger = topPanelTriggerRef.current;
+    setActiveTopPanel(null);
+    requestAnimationFrame(() => focusIfLost(document, trigger));
+  }, []);
+
+  useEffect(() => {
+    if (!activeTopPanel || activeTopPanel === "debug") return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest("[data-top-panel-dropdown], [data-top-panel-trigger]")) return;
+      setActiveTopPanel(null);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented || event.cancelBubble) return;
+      if (event.isComposing || event.keyCode === 229) return;
+      if (document.querySelector('[aria-modal="true"]')) return;
+      event.preventDefault();
+      closeTopPanel();
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [activeTopPanel, closeTopPanel]);
 
   // Files unmount when inactive; workspace terminals stay mounted until closed.
   const [fileTabs, setFileTabs] = useState<Tab[]>([]);
@@ -1687,36 +1778,18 @@ export function AppShell() {
         hiddenFinishedSessionIds={hiddenFinishedSessionIds}
         onRunningSessionIdsChange={handleRunningSessionIdsChange}
         onSessionsChange={handleSessionsChange}
+        onOpenPanel={(panel) => toggleTopPanel(panel, false)}
+        activePanel={
+          activeTopPanel === "agents" || activeTopPanel === "system" || activeTopPanel === "tools"
+            ? activeTopPanel
+            : null
+        }
       />
-      <div style={{ padding: "8px", flexShrink: 0, display: "flex", justifyContent: "space-between", gap: 4 }}>
-        {([
-          ["models", translate("common.models")],
-          ["skills", translate("common.skills")],
-        ] as const).map(([section, label]) => {
-          const disabled = settingsSectionRequiresProject(section) && !projectTrustCwd;
-          return (
-            <button
-              key={section}
-              type="button"
-              onClick={() => openSettingsSection(section)}
-              disabled={disabled}
-              title={disabled ? translate("settings.projectRequired") : label}
-              aria-label={label}
-              style={{
-                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                height: 32, padding: 0, background: "none", border: "none",
-                borderRadius: 9, color: "var(--text-muted)", cursor: disabled ? "default" : "pointer",
-                fontSize: 12, opacity: disabled ? 0.35 : 1,
-                transition: "background 0.12s, color 0.12s",
-              }}
-              onMouseEnter={(event) => { if (!disabled) { event.currentTarget.style.background = "var(--bg-hover)"; event.currentTarget.style.color = "var(--text)"; } }}
-              onMouseLeave={(event) => { event.currentTarget.style.background = "none"; event.currentTarget.style.color = "var(--text-muted)"; }}
-            >
-              <SettingsSectionIcon section={section} size={14} strokeWidth={2} />
-              <span>{label}</span>
-            </button>
-          );
-        })}
+      {/* The sidebar's footer entries take a Harness panelRow's shape: a 32px
+          row, a 12px corner, 2px between rows, sitting in the sidebar's own
+          6px 8px inset (SidebarRoot .root / .panelList / .panelRow) — listed
+          one per row, as that list is, not three cells side by side. */}
+      <div style={{ padding: "6px 8px", flexShrink: 0, display: "flex", flexDirection: "column", gap: 2 }}>
         <button
           type="button"
           onClick={() => {
@@ -1726,10 +1799,10 @@ export function AppShell() {
           title={translate("common.settings")}
           aria-label={translate("common.settings")}
           style={{
-            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-            height: 32, padding: 0, background: "none", border: "none",
-            borderRadius: 9, color: "var(--text-muted)", cursor: "pointer",
-            fontSize: 12, transition: "background 0.12s, color 0.12s",
+            width: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 8,
+            flexShrink: 0, height: 32, padding: "0 4px 0 9px", background: "none", border: "none",
+            borderRadius: 12, color: "var(--text-muted)", cursor: "pointer",
+            fontSize: 13, transition: "background 0.12s, color 0.12s",
           }}
           onMouseEnter={(event) => { event.currentTarget.style.background = "var(--bg-hover)"; event.currentTarget.style.color = "var(--text)"; }}
           onMouseLeave={(event) => { event.currentTarget.style.background = "none"; event.currentTarget.style.color = "var(--text-muted)"; }}
@@ -1760,8 +1833,8 @@ export function AppShell() {
           padding: mobileBanner ? "6px 12px" : "0 12px",
           background: mobileBanner ? "color-mix(in srgb, #d97706 8%, var(--bg-panel))" : "none",
           border: "none",
-          borderRight: mobileBanner ? "none" : "1px solid var(--border)",
-          borderBottom: mobileBanner ? "1px solid var(--border)" : "none",
+          borderRight: mobileBanner ? "none" : "0.5px solid var(--dsw-alias-border-l3, var(--border))",
+          borderBottom: mobileBanner ? "0.5px solid var(--dsw-alias-border-l3, var(--border))" : "none",
           color: "#d97706",
           cursor: "pointer",
           flexShrink: 0,
@@ -1837,17 +1910,17 @@ export function AppShell() {
         position: "relative",
         display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
         width: mobile ? TOP_BAR_ICON_BUTTON_SIZE : undefined,
-        height: "100%", padding: mobile ? 0 : "0 12px",
+        height: mobile ? "100%" : 28, padding: mobile ? 0 : "0 10px",
         background: activeTopPanel === "agents" ? "var(--bg-selected)" : "none",
         border: "none",
-        borderTop: activeTopPanel === "agents" ? "2px solid var(--accent)" : "2px solid transparent",
-        borderRight: "1px solid var(--border)",
+        borderRadius: 8,
         color: activeTopPanel === "agents" ? "var(--text)" : activeSessionFamily ? "var(--text-muted)" : "var(--text-dim)",
         cursor: activeSessionFamily ? "pointer" : "not-allowed", opacity: activeSessionFamily ? 1 : 0.45,
-        flexShrink: 0, fontSize: 11, whiteSpace: "nowrap",
+        flexShrink: 0, fontSize: 13, whiteSpace: "nowrap",
         transition: "color 0.1s, background 0.1s",
       }}
       data-mobile-toolbar-action={mobile ? "agents" : undefined}
+      data-top-panel-trigger=""
     >
       <svg width={mobile ? 16 : 13} height={mobile ? 16 : 13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <rect x="5" y="7" width="14" height="11" rx="2" /><path d="M9 11h.01M15 11h.01M9 15h6M12 7V4M10 4h4" />
@@ -1860,7 +1933,7 @@ export function AppShell() {
   const renderChatToolbarActions = (mobile: boolean) => {
     if (!mobile && !showChat) return null;
     return (
-      <div style={{ display: "flex", alignItems: "stretch", height: "100%" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 2, height: "100%" }}>
         <button
           type="button"
           onClick={() => {
@@ -1876,17 +1949,16 @@ export function AppShell() {
             justifyContent: "center",
             gap: 6,
             width: mobile ? TOP_BAR_ICON_BUTTON_SIZE : undefined,
-            height: "100%",
-            padding: mobile ? 0 : "0 12px",
+            height: mobile ? "100%" : 28,
+            padding: mobile ? 0 : "0 10px",
             background: "none",
             border: "none",
-            borderTop: "2px solid transparent",
-            borderRight: "1px solid var(--border)",
-            color: selectedSession ? "var(--text-muted)" : "var(--text-dim)",
+            borderRadius: 8,
+                color: selectedSession ? "var(--text-muted)" : "var(--text-dim)",
             cursor: selectedSession ? "pointer" : "not-allowed",
             opacity: selectedSession ? 1 : 0.45,
             flexShrink: 0,
-            fontSize: 11,
+            fontSize: 13,
             whiteSpace: "nowrap",
             transition: "color 0.1s, background 0.1s, opacity 0.1s",
           }}
@@ -1959,14 +2031,13 @@ export function AppShell() {
               style={{
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                 width: mobile ? TOP_BAR_ICON_BUTTON_SIZE : undefined,
-                height: "100%", padding: mobile ? 0 : "0 12px",
+                height: mobile ? "100%" : 28, padding: mobile ? 0 : "0 10px",
                 background: "none", border: "none",
-                borderTop: "2px solid transparent",
-                borderRight: "1px solid var(--border)",
-                color: isError ? "#dc2626" : isSuccess ? "var(--accent)" : disabled ? "var(--text-dim)" : "var(--text-muted)",
+                borderRadius: 8,
+                        color: isError ? "#dc2626" : isSuccess ? "var(--accent)" : disabled ? "var(--text-dim)" : "var(--text-muted)",
                 cursor: disabled ? "not-allowed" : "pointer",
                 opacity: disabled && autoNameStatus.kind !== "naming" ? 0.45 : 1,
-                flexShrink: 0, fontSize: 11, whiteSpace: "nowrap",
+                flexShrink: 0, fontSize: 13, whiteSpace: "nowrap",
                 transition: "color 0.1s, background 0.1s, opacity 0.1s",
               }}
               onMouseEnter={(event) => {
@@ -2013,12 +2084,12 @@ export function AppShell() {
               width: TOP_BAR_ICON_BUTTON_SIZE, height: "100%", padding: 0,
               background: activeTopPanel === "branches" ? "var(--bg-selected)" : "none",
               border: "none",
-              borderTop: activeTopPanel === "branches" ? "2px solid var(--accent)" : "2px solid transparent",
-              borderRight: "1px solid var(--border)",
-              color: activeTopPanel === "branches" ? "var(--text)" : "var(--text-muted)",
+              borderRadius: 8,
+                    color: activeTopPanel === "branches" ? "var(--text)" : "var(--text-muted)",
               cursor: "pointer", flexShrink: 0,
             }}
-            data-mobile-toolbar-action="branches"
+              data-mobile-toolbar-action="branches"
+            data-top-panel-trigger=""
           >
             <svg width={mobile ? 16 : 12} height={mobile ? 16 : 12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: branchTree.length > 0 ? "var(--accent)" : "var(--text-dim)" }} aria-hidden="true">
               <line x1="6" y1="3" x2="6" y2="15" />
@@ -2051,15 +2122,14 @@ export function AppShell() {
           style={{
             display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
             width: mobile ? TOP_BAR_ICON_BUTTON_SIZE : undefined,
-            height: "100%", padding: mobile ? 0 : "0 12px",
+            height: mobile ? "100%" : 28, padding: mobile ? 0 : "0 10px",
             background: activeTopPanel === "system" ? "var(--bg-selected)" : "none",
             border: "none",
-            borderTop: activeTopPanel === "system" ? "2px solid var(--accent)" : "2px solid transparent",
-            borderRight: "1px solid var(--border)",
-            cursor: mobile && !showChat ? "not-allowed" : "pointer",
+            borderRadius: 8,
+                cursor: mobile && !showChat ? "not-allowed" : "pointer",
             color: activeTopPanel === "system" ? "var(--text)" : "var(--text-muted)",
             opacity: mobile && !showChat ? 0.45 : 1,
-            fontSize: 11, whiteSpace: "nowrap", transition: "color 0.1s, background 0.1s",
+            fontSize: 13, whiteSpace: "nowrap", transition: "color 0.1s, background 0.1s",
           }}
           onMouseEnter={(event) => {
             if (mobile && !showChat) return;
@@ -2069,6 +2139,7 @@ export function AppShell() {
             event.currentTarget.style.color = activeTopPanel === "system" ? "var(--text)" : "var(--text-muted)";
           }}
           data-mobile-toolbar-action={mobile ? "system" : undefined}
+          data-top-panel-trigger=""
         >
           <svg width={mobile ? 16 : 12} height={mobile ? 16 : 12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: systemPrompt ? "var(--accent)" : "var(--text-dim)", flexShrink: 0 }} aria-hidden="true">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -2088,15 +2159,14 @@ export function AppShell() {
           style={{
             display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
             width: mobile ? TOP_BAR_ICON_BUTTON_SIZE : undefined,
-            height: "100%", padding: mobile ? 0 : "0 12px",
+            height: mobile ? "100%" : 28, padding: mobile ? 0 : "0 10px",
             background: activeTopPanel === "tools" ? "var(--bg-selected)" : "none",
             border: "none",
-            borderTop: activeTopPanel === "tools" ? "2px solid var(--accent)" : "2px solid transparent",
-            borderRight: "1px solid var(--border)",
-            cursor: mobile && !showChat ? "not-allowed" : "pointer",
+            borderRadius: 8,
+                cursor: mobile && !showChat ? "not-allowed" : "pointer",
             color: activeTopPanel === "tools" ? "var(--text)" : "var(--text-muted)",
             opacity: mobile && !showChat ? 0.45 : 1,
-            fontSize: 11, whiteSpace: "nowrap", transition: "color 0.1s, background 0.1s",
+            fontSize: 13, whiteSpace: "nowrap", transition: "color 0.1s, background 0.1s",
           }}
           onMouseEnter={(event) => {
             if (mobile && !showChat) return;
@@ -2106,6 +2176,7 @@ export function AppShell() {
             event.currentTarget.style.color = activeTopPanel === "tools" ? "var(--text)" : "var(--text-muted)";
           }}
           data-mobile-toolbar-action={mobile ? "tools" : undefined}
+          data-top-panel-trigger=""
         >
           <svg width={mobile ? 16 : 12} height={mobile ? 16 : 12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: systemTools?.some((tool) => tool.active) ? "var(--accent)" : "var(--text-dim)", flexShrink: 0 }} aria-hidden="true">
             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z" />
@@ -2129,8 +2200,8 @@ export function AppShell() {
     let mobileContextText: string | null = null;
     if (contextUsage?.contextWindow) {
       const percent = contextUsage.percent;
-      if (percent !== null && percent > 90) contextColor = "#ef4444";
-      else if (percent !== null && percent > 70) contextColor = "rgba(234,179,8,0.95)";
+      if (percent !== null && percent > 90) contextColor = "var(--dsw-alias-state-error-primary, #ef4444)";
+      else if (percent !== null && percent > 70) contextColor = "var(--dsw-alias-state-warn-primary, #eab308)";
       desktopContextText = percent !== null
         ? `${percent.toFixed(0)}% / ${formatCompact(contextUsage.contextWindow)}`
         : `? / ${formatCompact(contextUsage.contextWindow)}`;
@@ -2169,6 +2240,7 @@ export function AppShell() {
         aria-hidden={covered ? true : undefined}
         className={mobile ? "mobile-session-stats" : undefined}
         data-mobile-toolbar-stats={mobile ? "true" : undefined}
+        data-top-panel-trigger=""
         style={{
           // The Debug button before it takes the free space (renderDebugButton).
           marginLeft: 0,
@@ -2178,14 +2250,14 @@ export function AppShell() {
           gap: mobile ? 7 : 10,
           paddingLeft: mobile ? 6 : 12,
           paddingRight: mobile ? 6 : 12,
-          height: "100%",
+          height: mobile ? "100%" : 28,
           overflow: "hidden",
           visibility: covered ? "hidden" : "visible",
           pointerEvents: covered ? "none" : "auto",
           background: activeTopPanel === "session" ? "var(--bg-selected)" : "none",
           border: "none",
-          borderTop: activeTopPanel === "session" ? "2px solid var(--accent)" : "2px solid transparent",
-          fontSize: 11, color: "var(--text-muted)",
+          borderRadius: 8,
+          fontSize: 11, color: activeTopPanel === "session" ? "var(--text)" : "var(--text-muted)",
           whiteSpace: "nowrap", cursor: showChat ? "pointer" : "default",
           fontVariantNumeric: "tabular-nums",
           transition: "color 0.1s, background 0.1s",
@@ -2295,8 +2367,8 @@ export function AppShell() {
           width: TOP_BAR_ICON_BUTTON_SIZE, height: "100%", padding: 0,
           background: open ? "var(--bg-selected)" : "none",
           border: "none",
-          borderTop: open ? "2px solid var(--accent)" : "2px solid transparent",
-          ...(mobile ? { borderRight: "1px solid var(--border)" } : { borderLeft: "1px solid var(--border)" }),
+          borderRadius: 8,
+          ...(mobile ? { borderRight: "0.5px solid var(--dsw-alias-border-l3, var(--border))" } : { borderLeft: "0.5px solid var(--dsw-alias-border-l3, var(--border))" }),
           color: open ? "var(--text)" : "var(--text-muted)",
           cursor: "pointer", flexShrink: 0, transition: "color 0.1s, background 0.1s",
         }}
@@ -2339,7 +2411,7 @@ export function AppShell() {
           visibility: covered ? "hidden" : "visible",
           pointerEvents: covered ? "none" : "auto",
           background: rightPanelOpen ? "var(--bg-selected)" : "none",
-          border: "none", borderLeft: "1px solid var(--border)",
+          border: "none", borderLeft: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
           color: rightPanelOpen ? "var(--text)" : "var(--text-muted)",
           cursor: "pointer", flexShrink: 0, transition: "color 0.12s, background 0.12s",
         }}
@@ -2356,62 +2428,24 @@ export function AppShell() {
   return (
     <>
     <style>{`
-      @keyframes session-info-pop {
+      /* A dropdown card's entrance: a 160ms settle from 4px above, the same for every one
+         (the top panel's wrapper, a branch tree's card). It holds nothing after it ends, so
+         the frame never stays a containing block for anything fixed inside it. */
+      @keyframes top-panel-enter {
         0% {
           opacity: 0;
-          transform: translateY(-24px);
-          filter: blur(6px);
-          box-shadow: 0 2px 8px rgba(0,0,0,0);
-        }
-        55% {
-          opacity: 1;
-          transform: translateY(0);
-          filter: blur(0);
-          background: color-mix(in srgb, var(--accent) 8%, var(--bg-panel));
-          box-shadow: 0 18px 44px rgba(37,99,235,0.16);
+          transform: translateY(-4px);
         }
         100% {
           opacity: 1;
           transform: translateY(0);
-          filter: blur(0);
-          background: var(--bg-panel);
-          box-shadow: 0 10px 28px rgba(0,0,0,0.10);
         }
       }
-      @keyframes session-info-light-wash {
-        0% {
-          opacity: 0;
-          transform: translateX(-110%) skewX(-16deg);
-        }
-        24% {
-          opacity: 0.42;
-        }
-        100% {
-          opacity: 0;
-          transform: translateX(115%) skewX(-16deg);
-        }
-      }
-      .session-info-popover {
-        position: relative;
-        overflow: hidden;
-        transform-origin: top right;
-        animation: session-info-pop 360ms ease-out both;
-        will-change: transform, opacity, filter, background, box-shadow;
-      }
-      .session-info-popover::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        width: 44%;
-        pointer-events: none;
-        background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 24%, transparent), transparent);
-        animation: session-info-light-wash 620ms ease-out both;
+      .top-panel-enter {
+        animation: top-panel-enter 160ms ease-out backwards;
       }
       @media (prefers-reduced-motion: reduce) {
-        .session-info-popover,
-        .session-info-popover::after {
+        .top-panel-enter {
           animation: none;
         }
       }
@@ -2471,8 +2505,7 @@ export function AppShell() {
         className={`sidebar-container${sidebarOpen ? " sidebar-open" : " sidebar-closed"}${mobileSidebarReady ? "" : " sidebar-mobile-pending"}${sidebarResizer.isResizing ? " sidebar-resizing" : ""}`}
         style={{
           "--sidebar-width": `${sidebarResizer.width}px`,
-          background: "var(--bg-panel)",
-          borderRight: "1px solid var(--border)",
+          background: "var(--dsw-specific-sidebar-fill, var(--bg-panel))",
           display: "flex",
           flexDirection: "column",
           flexShrink: 0,
@@ -2496,21 +2529,67 @@ export function AppShell() {
 
       {/* Center: chat */}
       <div inert={rightPanelFullWidth} style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+        {/* The session's own header, above the bar: its name, then what the run
+            has done, in the harness's quiet pills; the toolbar underneath is
+            what you can do. The name comes first, as the harness puts it. */}
+        {!isMobile && selectedSession && showChat && (
+          <div
+            className="session-head"
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              flexShrink: 0, minWidth: 0,
+              padding: "14px 16px",
+              borderBottom: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
+              background: "var(--bg)",
+            }}
+          >
+            <div
+              style={{
+                flex: "0 1 auto", minWidth: 0,
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                color: "var(--dsw-alias-label-primary, var(--text))",
+                fontSize: 20, fontWeight: 500, lineHeight: "28px", letterSpacing: "-0.01em",
+              }}
+              title={sessionTitle(selectedSession)}
+            >
+              {sessionTitle(selectedSession)}
+            </div>
+            {sessionStats && sessionStats.totalMessages > 0 && (
+              <span className="session-head-pill">
+                {sessionStats.totalMessages} {translate("chat.messages")}
+              </span>
+            )}
+            {sessionStats && sessionStats.toolCalls > 0 && (
+              <span className="session-head-pill">
+                {sessionStats.toolCalls} {translate("chat.toolCalls")}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Top bar with sidebar toggle */}
-        <div ref={topBarRef} style={{ flexShrink: 0, background: "var(--bg-panel)" }}>
-        <div style={{ display: "flex", alignItems: "center", position: "relative", borderBottom: "1px solid var(--border)", height: "calc(var(--top-bar-height) + env(safe-area-inset-top))", paddingTop: "env(safe-area-inset-top)" }}>
+        {/* The bar belongs to the chat's page, not to a panel: it takes the
+            page's own ground, so the only tinted column is the sidebar. */}
+        <div ref={topBarRef} style={{ flexShrink: 0, background: "var(--bg)" }}>
+        <div style={{ display: "flex", alignItems: "center", position: "relative", gap: 2, borderBottom: "0.5px solid var(--dsw-alias-border-l3, var(--border))", height: isMobile ? "calc(var(--top-bar-height) + env(safe-area-inset-top))" : "calc(48px + env(safe-area-inset-top))", paddingTop: "env(safe-area-inset-top)", paddingRight: isMobile ? 0 : 8 }}>
+          {/* On a desktop the bar is the harness's toolbar: a 28px target in a
+              44px row, an 8px corner, no rule beside it. */}
           <button
             onClick={handleSidebarToggle}
              title={sidebarOpen ? translate("sidebar.hide") : translate("sidebar.show")}
              aria-label={sidebarOpen ? translate("sidebar.hide") : translate("sidebar.show")}
             style={{
               display: "flex", alignItems: "center", justifyContent: "center",
-              width: TOP_BAR_ICON_BUTTON_SIZE, height: TOP_BAR_ICON_BUTTON_SIZE, padding: 0,
-              background: "none", border: "none", borderRight: "1px solid var(--border)",
-              color: "var(--text-muted)", cursor: "pointer", flexShrink: 0, transition: "color 0.12s",
+              width: isMobile ? TOP_BAR_ICON_BUTTON_SIZE : 28,
+              height: isMobile ? TOP_BAR_ICON_BUTTON_SIZE : 28,
+              marginLeft: isMobile ? 0 : 8,
+              padding: 0, borderRadius: isMobile ? 0 : 8,
+              background: "none", border: "none",
+              borderRight: isMobile ? "0.5px solid var(--dsw-alias-border-l3, var(--border))" : "none",
+              color: "var(--text-muted)", cursor: "pointer", flexShrink: 0, transition: "color 0.12s, background 0.12s",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text)"; if (!isMobile) e.currentTarget.style.background = "var(--bg-hover)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; if (!isMobile) e.currentTarget.style.background = "none"; }}
           >
             {sidebarOpen ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -2551,7 +2630,7 @@ export function AppShell() {
                     display: "flex", alignItems: "center", justifyContent: "center",
                     width: TOP_BAR_ICON_BUTTON_SIZE, height: TOP_BAR_ICON_BUTTON_SIZE, padding: 0,
                     background: mobileToolbarMoreOpen ? "var(--bg-selected)" : "none",
-                    border: "none", borderRight: "1px solid var(--border)",
+                    border: "none", borderRight: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
                     color: mobileToolbarMoreOpen ? "var(--text)" : "var(--text-muted)",
                     cursor: "pointer", flexShrink: 0, transition: "color 0.12s, background 0.12s",
                   }}
@@ -2628,21 +2707,30 @@ export function AppShell() {
           )}
           {/* Top panel dropdown — shared, only one active at a time */}
           {activeTopPanel && topPanelPos && (
-            <div style={{
-              position: "fixed",
-              top: topPanelPos.top,
-              left: topPanelPos.left,
-              width: topPanelPos.width,
-              maxHeight: `calc(100dvh - ${topPanelPos.top}px)`,
-              overflowY: "auto",
-              zIndex: 500,
-            }}>
+            <div
+              data-top-panel-dropdown=""
+              className={activeTopPanel === "debug" ? undefined : "top-panel-enter"}
+              style={{
+                position: "fixed",
+                top: topPanelPos.top,
+                left: topPanelPos.left,
+                width: topPanelPos.width,
+                maxHeight: `calc(100dvh - ${topPanelPos.top}px)`,
+                // Debug fills the height it is given and scrolls here. A dropdown card owns its
+                // scrolling and sizes itself under --top-panel-max-height, so nothing clips the
+                // shadow it floats on.
+                overflowY: activeTopPanel === "debug" ? "auto" : "visible",
+                "--top-panel-max-height": `calc(100dvh - ${topPanelPos.top}px - 24px)`,
+                zIndex: 500,
+              } as React.CSSProperties}
+            >
               {activeTopPanel === "agents" && activeSessionFamily && selectedSession && (
                 <AgentSessionPanel
                   rootSession={activeSessionFamily.root}
                   subagents={activeSessionFamily.subagents}
                   selectedSessionId={selectedSession.id}
                   runningSessionIds={runningSessionIds}
+                  onClose={closeTopPanel}
                   // A pick closes the switcher, so the strip (where it shows) takes over at once.
                   onSelectSession={(session) => {
                     setActiveTopPanel(null);
@@ -2660,6 +2748,7 @@ export function AppShell() {
                   loading={systemInfoLoading}
                   prompt={systemPrompt}
                   translate={translate}
+                  onClose={closeTopPanel}
                 />
               )}
               {activeTopPanel === "tools" && (
@@ -2667,15 +2756,33 @@ export function AppShell() {
                   loading={systemInfoLoading}
                   tools={systemTools}
                   translate={translate}
+                  onClose={closeTopPanel}
                 />
               )}
               {activeTopPanel === "session" && (
                 <div className="session-info-popover" style={{
-                  background: "var(--bg-panel)",
-                  borderBottom: "1px solid var(--border)",
-                  boxShadow: "0 10px 28px rgba(0,0,0,0.10)",
-                  padding: "12px 16px",
+                  margin: "6px 8px 0",
+                  maxHeight: "var(--top-panel-max-height)",
+                  overflowY: "auto",
+                  border: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
+                  borderRadius: "var(--dsw-radius-md, 12px)",
+                  background: "var(--dsw-specific-menu, var(--bg))",
+                  WebkitBackdropFilter: "var(--dsw-menu-backdrop-filter, none)",
+                  backdropFilter: "var(--dsw-menu-backdrop-filter, none)",
+                  boxShadow: "var(--dsw-elevation-prominent, 0 10px 28px rgba(0,0,0,0.10))",
                 }}>
+                  {/* The header every dropdown card carries: what this is, and the way to put it away. */}
+                  <div style={{
+                    position: "sticky", top: 0, zIndex: 1,
+                    display: "flex", alignItems: "center", gap: 8, minHeight: 44,
+                    padding: "0 10px 0 16px",
+                    borderBottom: "0.5px solid var(--dsw-alias-border-l2, var(--border))",
+                    background: "var(--dsw-specific-menu, var(--bg))",
+                  }}>
+                    <strong style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 600, color: "var(--text)" }}>{translate("session.info")}</strong>
+                    <TopPanelCloseButton label={translate("i18n.close")} onClick={closeTopPanel} />
+                  </div>
+                  <div style={{ padding: "12px 16px 14px" }}>
                   {sessionStats ? (() => {
                     const totalActiveMs = sessionStats.totalActiveMs ?? 0;
                     const ws = selectedSession;
@@ -2720,7 +2827,7 @@ export function AppShell() {
                       compact = false,
                     ) => (
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>{title}</div>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text)", marginBottom: 6 }}>{title}</div>
                           <div style={{
                             display: "grid",
                             gridTemplateColumns: compact ? "max-content max-content" : "auto minmax(0, 1fr)",
@@ -2767,20 +2874,20 @@ export function AppShell() {
                             marginTop: -2,
                             color: copied ? "var(--accent)" : "var(--text-dim)",
                             background: "transparent",
-                            border: "1px solid var(--border)",
-                            borderRadius: 4,
+                            border: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
+                            borderRadius: "var(--dsw-radius-xs, 4px)",
                             cursor: "pointer",
                             flex: "0 0 auto",
                             transition: "color 0.12s, border-color 0.12s, background 0.12s",
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.color = "var(--accent)";
-                            e.currentTarget.style.borderColor = "var(--accent)";
-                            e.currentTarget.style.background = "var(--bg-hover)";
+                            e.currentTarget.style.borderColor = "color-mix(in srgb, var(--accent) 35%, transparent)";
+                            e.currentTarget.style.background = "var(--dsw-alias-interactive-bg-hover, var(--bg-hover))";
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.color = copied ? "var(--accent)" : "var(--text-dim)";
-                            e.currentTarget.style.borderColor = "var(--border)";
+                            e.currentTarget.style.borderColor = "var(--dsw-alias-border-l3, var(--border))";
                             e.currentTarget.style.background = "transparent";
                           }}
                         >
@@ -2798,8 +2905,8 @@ export function AppShell() {
                       );
                     };
                     const sessionInfoSection = (
+                      // No title of its own: the card's header right above names it.
                       <div style={{ minWidth: 0 }}>
-                         <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>{translate("session.infoSection")}</div>
                         <div style={{ display: "grid", gridTemplateColumns: "auto minmax(0, 1fr) auto", columnGap: 12, rowGap: 8, alignItems: "start" }}>
                           {sessionRows.map((row) => (
                             <div key={`session-info:${row.label}`} style={{ display: "contents" }}>
@@ -2819,7 +2926,7 @@ export function AppShell() {
                     );
                     const projectInfoSection = projectRows.length > 0 ? (
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>{translate("session.projectSection")}</div>
+                         <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text)", marginBottom: 6 }}>{translate("session.projectSection")}</div>
                         <div style={{ display: "grid", gridTemplateColumns: "auto minmax(0, 1fr) auto", columnGap: 12, rowGap: 8, alignItems: "start" }}>
                           {projectRows.map((row) => (
                             <div key={`project-info:${row.label}`} style={{ display: "contents" }}>
@@ -2859,9 +2966,10 @@ export function AppShell() {
                     );
                   })() : (
                     <div style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>
-                       {translate("session.load")}
+                      {translate("session.load")}
                     </div>
                   )}
+                  </div>
                 </div>
               )}
               {activeTopPanel === "debug" && (
@@ -3005,7 +3113,7 @@ export function AppShell() {
           "--right-panel-width": `${rightPanelResizer.width}px`,
           display: "flex",
           flexDirection: "column",
-          borderLeft: "1px solid var(--border)",
+          borderLeft: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
           background: "var(--bg)",
         } as React.CSSProperties}
       >
@@ -3016,9 +3124,31 @@ export function AppShell() {
           flexShrink: 0,
           height: "calc(var(--top-bar-height) + env(safe-area-inset-top))",
           paddingTop: "env(safe-area-inset-top)",
-          background: "var(--bg-panel)",
-          borderBottom: "1px solid var(--border)",
+          background: "var(--bg)",
+          borderBottom: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
         }}>
+          {/* On a phone the panel is the whole screen: a back control names what it
+              covers, where the icon-only button at the far end explained nothing. */}
+          {isMobile && (
+            <button
+              type="button"
+              onClick={() => setRightPanelOpen(false)}
+              aria-controls="file-panel"
+              aria-label={translate("files.backToChat")}
+              title={translate("files.backToChat")}
+              style={{
+                display: "flex", alignItems: "center", gap: 2,
+                height: TOP_BAR_ICON_BUTTON_SIZE, padding: "0 10px 0 6px",
+                background: "none", border: "none", flexShrink: 0,
+                color: "var(--text-muted)", fontSize: 13, cursor: "pointer",
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              <span>{translate("sidebar.tabSessions")}</span>
+            </button>
+          )}
           <div style={{ flex: 1, overflow: "hidden" }}>
             <TabBar
               tabs={panelTabs}
@@ -3043,6 +3173,8 @@ export function AppShell() {
                 : "M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M3 3l6 6m12-6-6 6M3 21l6-6m12 6-6-6"} />
             </svg>
           </button>
+          {/* The back control at the other end covers the phone's full-screen panel. */}
+          {!isMobile && (
           <button
             type="button"
             onClick={() => setRightPanelOpen(false)}
@@ -3053,7 +3185,7 @@ export function AppShell() {
             style={{
               display: "flex", alignItems: "center", justifyContent: "center",
               width: TOP_BAR_ICON_BUTTON_SIZE, height: TOP_BAR_ICON_BUTTON_SIZE, padding: 0,
-              background: "var(--bg-selected)", border: "none", borderLeft: "1px solid var(--border)",
+              background: "var(--bg-selected)", border: "none", borderLeft: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
               color: "var(--text)", cursor: "pointer", flexShrink: 0, transition: "color 0.12s",
             }}
             onMouseEnter={(event) => { event.currentTarget.style.color = "var(--accent)"; }}
@@ -3063,6 +3195,7 @@ export function AppShell() {
               <rect x="3" y="3" width="18" height="18" rx="2" /><line x1="15" y1="3" x2="15" y2="21" />
             </svg>
           </button>
+          )}
         </div>
 
         {/* Only the active viewer is mounted. Lightweight per-tab state is restored on activation. */}

@@ -28,6 +28,13 @@
 ## Terminal font size (`terminalFontSize()` in `hooks/useChatAppearance.ts`)
 - The terminal has no size setting of its own (#1277): it follows General's chat font size the way code blocks do, the same step from its own 13px at the 14px default (`terminalFontSize()`: chat − 1, so 11–23px). A slider move sets `terminal.options.fontSize` on the live xterm and refits through the panel's `fitAndResize`; the refit's `onResize` sends the new cols/rows to the PTY, the same path as a window resize.
 
+## Phone layouts (≤640px, and touch targets under `(pointer: coarse)`)
+- The drawer is opened two ways: the toolbar's hamburger, and a rightward drag from the screen's left 24px (AppShell's effect, mobile only). The gesture only observes (`pointerdown`/`pointermove` on `window`, nothing prevented or captured), so a vertical scroll that starts at the edge still scrolls and the drawer's own long-press row drag is untouched; it takes 48px of horizontal travel with `|dy| ≤ |dx|`, and stands down while the file panel or an `aria-modal` dialog covers the page. Closing stays the backdrop's tap, so a swipe never fights the session tree's drag.
+- The file panel is the whole screen on a phone, so its header leads with `‹ 会话` (`files.backToChat`) back to the chat; the icon-only hide button at the far end is desktop only, and the expand/resize controls are hidden by CSS there.
+- The Tools panel's side column would leave the details under 250px at 390px: on a phone the tools are one horizontally scrolling row of chips under the header and the details take the full width, with a field's name and value stacked (ToolDefinitionsPanel's own media query).
+- A tab's × is 24px, a 32px target under `(pointer: coarse)`/phones (`--tabbar-close-size`, set beside `--top-bar-height`).
+- Message actions (Copy, Edit from here, New session) wait for hover under a pointer; `(hover: none)` sets `--message-actions-opacity`/`--message-actions-events` to their shown values, which the rows' inline rest values read, so a phone shows them without a hover it does not have. Same idiom as a display formula's Copy button.
+
 ## Sidebar breakpoint (`components/AppShell.tsx`)
 - The mobile drawer starts closed on entering the mobile breakpoint. Desktop open state is remembered separately, seeded from the URL's initial `sidebarCollapsed` value and updated only by explicit desktop toggles. Returning to desktop restores that preference; mobile drawer toggles, backdrop clicks and toolbar actions must not replace it.
 

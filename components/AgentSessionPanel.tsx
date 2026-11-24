@@ -8,6 +8,7 @@ import { formatActiveDuration, formatCompactCount, formatCostShort } from "@/lib
 import type { SessionInfo, SubagentSessionStatus } from "@/lib/types";
 import { DeleteConfirm } from "./SessionTree";
 import { TrashIcon } from "./SidebarIcons";
+import { TopPanelCloseButton } from "./TopPanelCloseButton";
 
 interface Props {
   rootSession: SessionInfo;
@@ -23,6 +24,8 @@ interface Props {
   onNewSideChat: () => Promise<string | null>;
   /** Deletes one side chat and its tab; answers the failure to show, or null. */
   onDeleteSideChat: (sessionId: string) => Promise<string | null>;
+  /** Dismisses the panel; the × in the header. */
+  onClose?: () => void;
 }
 
 const STATS_POLL_MS = 3000;
@@ -278,10 +281,11 @@ function AgentRow({
           gap: 5,
           height: confirmHeight,
           minHeight: 56,
-          padding: "7px 12px",
-          borderBottom: "1px solid var(--border)",
-          background: "rgba(239, 68, 68, 0.06)",
-          boxShadow: "inset 0 0 0 1px rgba(239, 68, 68, 0.35)",
+          margin: "0 6px",
+          padding: "7px 10px 7px 16px",
+          borderRadius: "var(--dsw-radius-md, 8px)",
+          background: "color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef4444) 6%, transparent)",
+          boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef4444) 35%, transparent)",
         }}
         onKeyDown={(event) => {
           if (event.key !== "Escape") return;
@@ -304,19 +308,27 @@ function AgentRow({
   return (
     <div
       ref={rowRef}
+      // A row as the sidebar's: a rounded box inset from the card's edges that fills
+      // under the pointer, and stays filled with a short bar at its left when chosen.
+      className={selected ? undefined : "hover:bg-[var(--dsw-alias-interactive-bg-hover,var(--bg-hover))]"}
       style={{
+        position: "relative",
         display: "flex",
-        borderBottom: "1px solid var(--border)",
-        borderLeft: selected ? "2px solid var(--accent)" : "2px solid transparent",
-        background: selected ? "var(--bg-selected)" : "transparent",
+        margin: "0 6px",
+        borderRadius: "var(--dsw-radius-md, 8px)",
+        background: selected ? "var(--dsw-specific-sidebar-nav-item-active, var(--bg-selected))" : undefined,
+        transition: "background 0.12s",
       }}
     >
+      {selected && (
+        <span aria-hidden="true" style={{ position: "absolute", top: 9, bottom: 9, left: 0, width: 2, borderRadius: "0 1px 1px 0", background: "var(--dsw-alias-state-business-primary, var(--accent))" }} />
+      )}
       <button
         type="button"
         role="option"
         aria-selected={selected}
         onClick={onSelect}
-        className={selected ? "bg-transparent" : "bg-transparent hover:bg-bg-hover"}
+        className="bg-transparent"
         style={{
           flex: 1,
           minWidth: 0,
@@ -325,7 +337,7 @@ function AgentRow({
           gridTemplateColumns: "28px minmax(0, 1fr) auto",
           alignItems: "center",
           gap: 9,
-          padding: "7px 12px",
+          padding: "7px 4px 7px 10px",
           border: "none",
           color: "var(--text)",
           cursor: "pointer",
@@ -406,13 +418,16 @@ function RowSideButton({ title, pressed, danger, disabled, onClick, children }: 
   onClick: () => void;
   children: ReactNode;
 }) {
-  const state = disabled
-    ? "cursor-not-allowed text-text-dim opacity-40"
-    : danger
-      ? "cursor-pointer text-text-muted hover:bg-[rgba(239,68,68,0.08)] hover:text-[#ef4444] focus-visible:bg-[rgba(239,68,68,0.08)] focus-visible:text-[#ef4444]"
-      : pressed
-        ? "cursor-pointer text-accent hover:bg-bg-hover"
-        : "cursor-pointer text-text-muted hover:bg-bg-hover hover:text-text";
+  // The sidebar's row affordance: a quiet square that fills under the pointer.
+  const restingColor = disabled
+    ? "var(--text-dim)"
+    : danger || !pressed ? "var(--text-muted)" : "var(--accent)";
+  const hoverColor = danger
+    ? "var(--dsw-alias-state-error-primary, #ef4444)"
+    : pressed ? "var(--accent)" : "var(--text)";
+  const hoverFill = danger
+    ? "color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef4444) 9%, transparent)"
+    : "var(--dsw-alias-interactive-bg-hover, var(--bg-hover))";
   return (
     <button
       type="button"
@@ -421,15 +436,36 @@ function RowSideButton({ title, pressed, danger, disabled, onClick, children }: 
       aria-label={title}
       aria-pressed={pressed}
       disabled={disabled}
-      className={`bg-transparent ${state}`}
-      style={{ width: 36, display: "grid", placeItems: "center", border: "none", borderLeft: "1px solid var(--border)", flexShrink: 0 }}
+      className={`bg-transparent ${disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"}`}
+      style={{
+        alignSelf: "center",
+        width: 28,
+        height: 28,
+        marginRight: 6,
+        display: "grid",
+        placeItems: "center",
+        border: "none",
+        borderRadius: "var(--dsw-radius-sm, 8px)",
+        color: restingColor,
+        flexShrink: 0,
+        transition: "background 0.12s, color 0.12s",
+      }}
+      onMouseEnter={(event) => {
+        if (disabled) return;
+        event.currentTarget.style.background = hoverFill;
+        event.currentTarget.style.color = hoverColor;
+      }}
+      onMouseLeave={(event) => {
+        event.currentTarget.style.background = "transparent";
+        event.currentTarget.style.color = restingColor;
+      }}
     >
       {children}
     </button>
   );
 }
 
-export function AgentSessionPanel({ rootSession, subagents, selectedSessionId, runningSessionIds, onSelectSession, openSubagentTabIds, onToggleSubagentTab, onNewSideChat, onDeleteSideChat }: Props) {
+export function AgentSessionPanel({ rootSession, subagents, selectedSessionId, runningSessionIds, onSelectSession, openSubagentTabIds, onToggleSubagentTab, onNewSideChat, onDeleteSideChat, onClose }: Props) {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [newSideChatPending, setNewSideChatPending] = useState(false);
@@ -505,18 +541,20 @@ export function AgentSessionPanel({ rootSession, subagents, selectedSessionId, r
       role="listbox"
       aria-label={t("agentSwitcher.title")}
       style={{
-        background: "var(--bg-panel)",
-        // No left border: the panel starts at the chat column's left edge, where the sidebar's
-        // own right border already runs, as the full-width top panels have only a bottom line.
-        borderRight: "1px solid var(--border)",
-        borderBottom: "1px solid var(--border)",
-        borderRadius: "0 0 6px 0",
-        boxShadow: "0 10px 28px rgba(0,0,0,0.10)",
+        marginTop: 6,
+        // A floating card like the other dropdowns (AppShell sets it 8px in from the chat
+        // column's edges), on a hairline all round.
+        border: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
+        borderRadius: "var(--dsw-radius-md, 12px)",
+        background: "var(--dsw-specific-menu, var(--bg-panel))",
+        WebkitBackdropFilter: "var(--dsw-menu-backdrop-filter, none)",
+        backdropFilter: "var(--dsw-menu-backdrop-filter, none)",
+        boxShadow: "var(--dsw-elevation-prominent, 0 10px 28px rgba(0,0,0,0.10))",
         overflow: "hidden",
       }}
     >
       <div>
-        <div style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 8, padding: "7px 10px 7px 16px", borderBottom: "0.5px solid var(--dsw-alias-border-l2, var(--border))" }}>
           <strong style={{ fontSize: 12, fontWeight: 600 }}>{t("agentSwitcher.title")}</strong>
           {subagents.length > 0 && (
             <span style={{ color: "var(--text-dim)", fontSize: 11 }}>
@@ -538,9 +576,10 @@ export function AgentSessionPanel({ rootSession, subagents, selectedSessionId, r
               </span>
             )}
           </span>
+          {onClose && <TopPanelCloseButton label={t("i18n.close")} onClick={onClose} />}
         </div>
         {subagents.length > 8 && (
-          <div style={{ padding: 8, borderBottom: "1px solid var(--border)" }}>
+          <div style={{ padding: "2px 10px 6px" }}>
             <input
               type="search"
               value={query}
@@ -549,13 +588,13 @@ export function AgentSessionPanel({ rootSession, subagents, selectedSessionId, r
               aria-label={t("agentSwitcher.search")}
               style={{
                 width: "100%", height: 32, padding: "0 10px",
-                border: "1px solid var(--border)", borderRadius: 6,
+                border: "0.5px solid var(--dsw-alias-border-l3, var(--border))", borderRadius: "var(--dsw-radius-sm, 8px)",
                 background: "var(--bg)", color: "var(--text)", fontSize: 12, outline: "none",
               }}
             />
           </div>
         )}
-        <div style={{ maxHeight: "min(58dvh, 480px)", overflowY: "auto" }}>
+        <div style={{ maxHeight: "min(58dvh, 480px, calc(var(--top-panel-max-height, 75dvh) - 106px))", overflowY: "auto", padding: "4px 0 6px" }}>
           <AgentRow
             session={rootSession}
             main
@@ -567,7 +606,7 @@ export function AgentSessionPanel({ rootSession, subagents, selectedSessionId, r
             newSideChatPending={newSideChatPending}
           />
           {(newSideChatError || deleteSideChatError) && (
-            <div role="alert" style={{ padding: "6px 12px", borderBottom: "1px solid var(--border)", color: "#dc2626", fontSize: 12, overflowWrap: "anywhere" }}>
+            <div role="alert" style={{ padding: "6px 12px 6px 16px", color: "var(--dsw-alias-state-error-primary, #dc2626)", fontSize: 12, overflowWrap: "anywhere" }}>
               {newSideChatError ?? deleteSideChatError}
             </div>
           )}

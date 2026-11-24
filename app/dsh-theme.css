@@ -1,0 +1,637 @@
+/*
+ * DeepSeek Harness design tokens.
+ *
+ * The palettes live in globals.css (the 14 [data-theme] blocks); this file adds
+ * the parts of DSH's design-platform.css those palettes have no room for:
+ * the alias scale (--dsw-alias-*), radii, elevation, easing, the brand face and
+ * the geometric details that make the app read as DSH rather than as a generic
+ * dashboard — a 28px composer card floating on a hairline stroke, 20px message
+ * bubbles with no border, 12px sidebar rows, a 5px scroll rail.
+ *
+ * Token names are kept identical to DSH's own (design-platform.css,
+ * base.css, gradient-shadow-text.css, scrollbar.css, focus.css) so a value can
+ * be checked against the source without translation.
+ */
+
+/* ---------------------------------------------------------------------------
+ * Static scale — DSH's raw palette. Only the stops this app uses are here.
+ * ------------------------------------------------------------------------- */
+body {
+  --dsw-static-neutral-bluish-00: #ffffff;
+  --dsw-static-neutral-bluish-50: rgb(249, 250, 251);
+  --dsw-static-neutral-bluish-60: rgb(245, 246, 247);
+  --dsw-static-neutral-bluish-75: rgb(241, 243, 245);
+  --dsw-static-neutral-bluish-100: rgb(235, 238, 242);
+  --dsw-static-neutral-bluish-200: rgb(225, 229, 238);
+  --dsw-static-neutral-bluish-300: rgb(207, 211, 214);
+  --dsw-static-neutral-bluish-400: rgb(173, 178, 184);
+  --dsw-static-neutral-bluish-600: rgb(129, 133, 140);
+  --dsw-static-neutral-bluish-700: rgb(97, 102, 107);
+  --dsw-static-neutral-bluish-750: rgb(67, 69, 74);
+  --dsw-static-neutral-bluish-800: rgb(53, 54, 56);
+  --dsw-static-neutral-bluish-850: rgb(44, 44, 46);
+  --dsw-static-neutral-bluish-875: rgb(35, 35, 36);
+  --dsw-static-neutral-bluish-900: rgb(27, 27, 28);
+  --dsw-static-neutral-bluish-950: rgb(21, 21, 23);
+  --dsw-static-neutral-bluish-1000: rgb(15, 17, 21);
+
+  --dsw-static-neutral-50: rgb(250, 250, 250);
+  --dsw-static-neutral-200: rgb(229, 229, 229);
+  --dsw-static-neutral-300: rgb(212, 212, 212);
+  --dsw-static-neutral-600: rgb(84, 85, 87);
+  --dsw-static-neutral-700: rgb(60, 60, 61);
+  --dsw-static-neutral-800: rgb(41, 41, 41);
+
+  --dsw-static-deepseek-50: rgb(237, 243, 254);
+  --dsw-static-deepseek-100: rgb(228, 237, 253);
+  --dsw-static-deepseek-200: rgb(211, 226, 255);
+  --dsw-static-deepseek-400: rgb(122, 170, 255);
+  --dsw-static-deepseek-450: rgb(86, 134, 254);
+  --dsw-static-deepseek-500: rgb(65, 118, 230);
+  --dsw-static-deepseek-600: rgb(72, 104, 178);
+
+  --dsw-static-red-400: rgb(242, 90, 90);
+  --dsw-static-red-600: rgb(236, 19, 19);
+  --dsw-static-green-400: rgb(78, 209, 126);
+  --dsw-static-green-500: rgb(34, 197, 94);
+  --dsw-static-amber-400: rgb(247, 173, 49);
+  --dsw-static-amber-500: rgb(245, 158, 11);
+  --dsw-static-violet-400: rgb(167, 139, 250);
+
+  /* Geometry and motion. */
+  --dsw-radius-xs: 4px;
+  --dsw-radius-sm: 8px;
+  --dsw-radius-md: 12px;
+  --dsw-radius-lg: 16px;
+  --dsw-radius-xl: 20px;
+  --dsw-radius-panel: 28px;
+
+  --ds-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ds-transition-duration: 0.2s;
+  --ds-transition-duration-fast: 0.1s;
+  --ds-transition-duration-slow: 0.3s;
+
+  /* Type. The text stack leads with the system UI faces DSH names first;
+     Montserrat is the brand face only (app/fonts.css serves it locally). */
+  --dsw-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --dsw-font-family-brand: 'Montserrat', var(--dsw-font-family);
+  --dsw-font-family-code: 'SF Mono', 'JetBrains Mono', 'Fira Code', Consolas, 'Liberation Mono', Menlo, Courier, 'PingFang SC', 'Microsoft YaHei';
+
+  /* Shadow ladder, then the elevation triplets DSH builds from it. Each is a
+     full box-shadow list; the .5px stroke is what gives DSH's flat surfaces an
+     edge without a visible border. */
+  --dsw-shadow-lv1: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --dsw-shadow-lv2: 0 4px 12px rgba(0, 0, 0, 0.02), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --dsw-shadow-lv3: 0 0 1px rgba(0, 0, 0, 0.2), 0 0 4px rgba(0, 0, 0, 0.02), 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+/* The stroke colour differs per theme, so the derived lists are declared per
+   theme too: a custom property cannot be rebuilt from a rebound variable. */
+body,
+body * {
+  --dsw-elevation-stroke-color: rgba(0, 0, 0, 0.08);
+  --dsw-elevation-stroke: 0 0 0 0.5px var(--dsw-elevation-stroke-color);
+  --dsw-elevation-soft: var(--dsw-elevation-stroke), 0 4px 16px rgba(0, 0, 0, 0.03), 0 0 24px rgba(0, 0, 0, 0.03);
+  --dsw-elevation-panel: var(--dsw-elevation-stroke), 0 3px 8px rgba(0, 0, 0, 0.03), 0 0 16px rgba(0, 0, 0, 0.02);
+  --dsw-elevation-prominent: var(--dsw-elevation-stroke), 0 3px 8px rgba(0, 0, 0, 0.04), 0 0 20px rgba(0, 0, 0, 0.05);
+}
+
+html.dark,
+body[data-ds-dark-theme],
+html[data-theme="dark"] {
+  --dsw-elevation-stroke-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ---------------------------------------------------------------------------
+ * Light aliases: bg-base, sidebar-fill, the four borders, the label ramp,
+ * the button fills and the two surfaces (bubble, code block) DSH paints most.
+ *
+ * Two kinds sit here. Anything with an equal in the app's own palette
+ * (--bg, --bg-panel, --bg-hover, --bg-selected, --text*, --accent, --tool-bg,
+ * --bg-subtle) references that variable instead of a static stop: globals.css
+ * already maps light and dark onto DSH's values, so the reference renders the
+ * same there while the other twelve themes flow their own palettes through
+ * the alias. The rest (borders, scrollbar, state and diff colours, button
+ * fills) are neutrals or semantics that carry no theme tint, and stay static.
+ * ------------------------------------------------------------------------- */
+body {
+  --dsw-alias-bg-base: var(--bg);
+  --dsw-alias-bg-layer-1: var(--dsw-static-neutral-bluish-50);
+  --dsw-alias-bg-layer-2: var(--dsw-static-neutral-bluish-60);
+  --dsw-alias-bg-layer-3: var(--dsw-static-neutral-bluish-75);
+
+  --dsw-alias-border-l1: rgba(0, 0, 0, 0.04);
+  --dsw-alias-border-l2: rgba(0, 0, 0, 0.1);
+  --dsw-alias-border-l3: rgba(0, 0, 0, 0.12);
+  --dsw-alias-border-l4: rgba(0, 0, 0, 0.16);
+
+  --dsw-alias-link: var(--accent);
+  --dsw-alias-bg-mask-1: rgba(0, 0, 0, 0.24);
+  --dsw-alias-label-primary: var(--text);
+  --dsw-alias-label-secondary: var(--text-muted);
+  --dsw-alias-label-tertiary: var(--text-dim);
+  --dsw-alias-label-caption: var(--dsw-static-neutral-bluish-400);
+  --dsw-alias-label-dimmed: var(--dsw-static-neutral-bluish-200);
+
+  --dsw-alias-button-primary-fill: var(--dsw-static-neutral-bluish-1000);
+  --dsw-alias-button-elevated-fill: var(--dsw-static-neutral-bluish-00);
+  --dsw-alias-button-info-fill: var(--dsw-static-deepseek-500);
+  --dsw-alias-button-info-hover: var(--dsw-static-deepseek-450);
+  --dsw-alias-button-contrast-fill: var(--dsw-static-neutral-bluish-700);
+  --dsw-alias-button-ghost-active-fill: var(--dsw-static-neutral-bluish-100);
+
+  --dsw-alias-interactive-bg-hover: var(--bg-hover);
+  --dsw-alias-interactive-bg-active: rgba(38, 49, 72, 0.1);
+  --dsw-alias-interactive-bg-hover-accent: rgba(65, 118, 230, 0.14);
+  --dsw-alias-interactive-bg-hover-danger: rgba(236, 19, 19, 0.05);
+
+  --dsw-alias-markdown-code-block: var(--tool-bg);
+  /* The banner rides the code surface one label-step into the text: in light
+     it is the surface itself, in dark a lift, in every theme its own tint. */
+  --dsw-alias-markdown-code-banner: var(--tool-bg);
+  --dsw-alias-markdown-inline-code: var(--bg-subtle);
+
+  --dsw-alias-scrollbar-bg-l1: var(--dsw-static-neutral-200);
+  --dsw-alias-scrollbar-bg-l2: var(--dsw-static-neutral-200);
+  --dsw-alias-scrollbar-hover-l1: var(--dsw-static-neutral-300);
+  --dsw-alias-scrollbar-hover-l2: var(--dsw-static-neutral-300);
+
+  --dsw-alias-state-business-primary: var(--accent);
+  --dsw-alias-state-error-primary: var(--dsw-static-red-600);
+  --dsw-alias-state-error-secondary: var(--dsw-static-red-400);
+  --dsw-alias-state-success-primary: var(--dsw-static-green-500);
+  --dsw-alias-state-warn-primary: var(--dsw-static-amber-500);
+  --dsw-alias-state-done-primary: rgb(124, 58, 237);
+
+  /* diff rows, straight from DSH's file-diff ramp */
+  --dsw-alias-file-diff-added-bg: rgb(230, 244, 231);
+  --dsw-alias-file-diff-added-marker: rgb(1, 162, 65);
+  --dsw-alias-file-diff-deleted-bg: rgb(252, 230, 226);
+  --dsw-alias-file-diff-deleted-marker: rgb(186, 39, 35);
+  --dsw-alias-file-diff-hunk-bg: rgba(65, 118, 230, 0.1);
+
+  --dsw-specific-bubble: var(--user-bg);
+  --dsw-specific-bubble-highlight: var(--dsw-static-deepseek-200);
+  --dsw-specific-input-major: var(--bg);
+  --dsw-specific-selector: var(--dsw-static-neutral-bluish-60);
+  --dsw-specific-sidebar-fill: var(--bg-panel);
+  --dsw-specific-sidebar-nav-item-active: var(--bg-selected);
+  --dsw-specific-menu: rgba(252, 253, 254, 0.7);
+
+  --dsw-menu-backdrop-filter: blur(40px) saturate(150%);
+
+  --dsw-focus-ring-width: 2px;
+  --dsh-scrollbar-width: 5px;
+}
+
+/* ---------------------------------------------------------------------------
+ * Dark aliases. Only the values that genuinely differ from light live here:
+   the neutrals (borders, scrollbar, mask, dimmed labels), the semantic state
+   colours DSH brightens for dark, the button fills, the diff ramp, the menu
+   surface — and the code banner's lift. Everything else derives from the
+   palette variables now and switches with them on its own.
+ * ------------------------------------------------------------------------- */
+html.dark body,
+body[data-ds-dark-theme],
+html[data-theme="dark"] body {
+  --dsw-alias-bg-layer-1: var(--dsw-static-neutral-bluish-875);
+  --dsw-alias-bg-layer-2: var(--dsw-static-neutral-bluish-850);
+  --dsw-alias-bg-layer-3: var(--dsw-static-neutral-bluish-800);
+
+  --dsw-alias-border-l1: rgba(255, 255, 255, 0.06);
+  --dsw-alias-border-l2: rgba(255, 255, 255, 0.12);
+  --dsw-alias-border-l3: rgba(255, 255, 255, 0.16);
+  --dsw-alias-border-l4: rgba(255, 255, 255, 0.2);
+
+  --dsw-alias-bg-mask-1: rgba(0, 0, 0, 0.5);
+  --dsw-alias-label-dimmed: var(--dsw-static-neutral-bluish-750);
+
+  --dsw-alias-button-primary-fill: var(--dsw-static-neutral-bluish-50);
+  --dsw-alias-button-elevated-fill: var(--dsw-static-neutral-bluish-750);
+  --dsw-alias-button-info-fill: var(--dsw-static-deepseek-400);
+  --dsw-alias-button-info-hover: var(--dsw-static-deepseek-500);
+  --dsw-alias-button-contrast-fill: var(--dsw-static-neutral-bluish-300);
+  --dsw-alias-button-ghost-active-fill: var(--dsw-static-neutral-bluish-750);
+
+  --dsw-alias-interactive-bg-active: rgba(255, 255, 255, 0.14);
+  --dsw-alias-interactive-bg-hover-accent: rgba(122, 170, 255, 0.18);
+  --dsw-alias-interactive-bg-hover-danger: rgba(242, 90, 90, 0.1);
+
+  --dsw-alias-markdown-code-banner: color-mix(in srgb, var(--text) 8%, var(--tool-bg));
+
+  --dsw-alias-scrollbar-bg-l1: var(--dsw-static-neutral-700);
+  --dsw-alias-scrollbar-bg-l2: var(--dsw-static-neutral-700);
+  --dsw-alias-scrollbar-hover-l1: var(--dsw-static-neutral-600);
+  --dsw-alias-scrollbar-hover-l2: var(--dsw-static-neutral-600);
+
+  --dsw-alias-state-error-primary: var(--dsw-static-red-400);
+  --dsw-alias-state-error-secondary: var(--dsw-static-red-400);
+  --dsw-alias-state-success-primary: var(--dsw-static-green-500);
+  --dsw-alias-state-warn-primary: var(--dsw-static-amber-500);
+  --dsw-alias-state-done-primary: var(--dsw-static-violet-400);
+
+  --dsw-alias-file-diff-added-bg: rgb(31, 49, 36);
+  --dsw-alias-file-diff-added-marker: rgb(65, 201, 119);
+  --dsw-alias-file-diff-deleted-bg: rgb(60, 31, 27);
+  --dsw-alias-file-diff-deleted-marker: rgb(250, 66, 62);
+  --dsw-alias-file-diff-hunk-bg: rgba(122, 170, 255, 0.12);
+
+  --dsw-specific-bubble: var(--dsw-static-neutral-bluish-850);
+  --dsw-specific-bubble-highlight: var(--dsw-static-neutral-bluish-750);
+  --dsw-specific-input-major: var(--dsw-static-neutral-bluish-850);
+  --dsw-specific-selector: var(--dsw-static-neutral-bluish-800);
+  --dsw-specific-sidebar-fill: var(--dsw-static-neutral-bluish-900);
+  --dsw-specific-sidebar-nav-item-active: var(--dsw-static-neutral-bluish-750);
+  --dsw-specific-menu: rgba(48, 49, 54, 0.64);
+}
+
+/* ---------------------------------------------------------------------------
+ * Geometry. Nothing below changes a colour token; each rule carries one of the
+ * measurements that separate DSH from a default dashboard.
+ *
+ * The composer card and the user bubble are styled inline in ChatInput.tsx and
+ * MessageView.tsx, because their geometry tracks state (compact, bash mode,
+ * streaming). Their DSH numbers are applied there; these rules cover what is
+ * already class-driven.
+ * ------------------------------------------------------------------------- */
+
+/* A DSH sidebar row is 12px round and inset, not a full-width band; the tree
+   writes the row height inline (lib/session-tree.ts), so only the corners are
+   set here. The side inset stays at the value SessionSidebar's fit test sums
+   up. */
+.session-tree-session {
+  border-radius: var(--dsw-radius-md);
+}
+
+/* fenced code: DSH separates a code block from the page with a surface, not a
+   frame (markdown-code-block is bluish-50 in light, bluish-900 in dark). Its
+   corner is the 16px ladder step, and the banner is 9px/14px at 11/18. */
+.markdown-code-block {
+  border: 0;
+  border-radius: var(--dsw-radius-lg);
+  margin: 16px 0;
+  background: var(--dsw-alias-markdown-code-block, var(--bg-panel));
+  box-shadow: var(--dsw-elevation-stroke);
+}
+
+.markdown-code-header {
+  padding: 9px 14px;
+  background: var(--dsw-alias-markdown-code-banner, var(--bg-panel));
+  border-bottom: 0;
+  border-top-left-radius: var(--dsw-radius-lg);
+  border-top-right-radius: var(--dsw-radius-lg);
+  font-size: 11px;
+  line-height: 18px;
+}
+
+/* An inline chip is a 0.5px hairlined pill on the code surface, and its border
+   rides the left/right hit-area padding DSH uses instead of a shadow. */
+.markdown-inline-code,
+.markdown-body .markdown-inline-code {
+  background: var(--dsw-alias-markdown-inline-code, var(--bg-subtle));
+  border: 0.5px solid var(--dsw-alias-border-l1, var(--border));
+  border-radius: var(--dsw-radius-sm);
+  padding: 0 5px;
+  box-shadow: none;
+  font-size: 0.875em;
+}
+
+/* The empty state's title, at DSH's HeroShell weight and size. */
+.new-session-brand-name {
+  font-family: var(--dsw-font-family-brand);
+  font-weight: 500;
+  font-size: 26px;
+  line-height: 32px;
+  letter-spacing: 0.01em;
+}
+
+.new-session-brand {
+  gap: 10px;
+}
+
+/* The brand button in the sidebar keeps the 15px size PiWebTitle's fit test
+   measures against the sidebar's minimum width, but switches to the brand face
+   so the wordmark matches the one in the empty state. This sheet loads after
+   sidebar.css, so the same-specificity rule wins. */
+.sidebar-brand {
+  font-family: var(--dsw-font-family-brand);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* Focus: DSH draws a 2px business-blue ring, never the UA default, and drops it
+   entirely for pointer-driven focus. */
+:focus-visible {
+  outline-color: var(--dsw-alias-state-business-primary);
+  outline-width: var(--dsw-focus-ring-width);
+}
+
+html[data-input-modality="pointer"] body :focus-visible:not(:read-write) {
+  outline-color: transparent;
+}
+
+/* The login card's password row is the same composer shell as the chat's, so it
+   takes the same 28px panel and stroke. */
+.web-login-composer {
+  border-radius: var(--dsw-radius-panel);
+  padding: 12px 12px 12px 16px;
+  border-color: color-mix(in srgb, var(--dsw-alias-border-l3, var(--border)) 100%, transparent);
+  box-shadow: var(--dsw-elevation-soft);
+}
+
+/* Popovers: DSH floats a translucent 12px menu with a blurred backdrop and a
+   prominent elevation instead of an opaque square-cornered panel. */
+.sidebar-menu {
+  border: 0.5px solid var(--dsw-alias-border-l3, var(--border));
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-specific-menu, var(--bg));
+  -webkit-backdrop-filter: var(--dsw-menu-backdrop-filter);
+  backdrop-filter: var(--dsw-menu-backdrop-filter);
+  box-shadow: var(--dsw-elevation-prominent);
+}
+
+.sidebar-menu-item {
+  border-radius: var(--dsw-radius-sm);
+}
+/* The panel's own New, below the toolbar: a row of its own, full width,
+   lifted off the sidebar's fill by a raised surface and a hairline. */
+.sidebar-new-row {
+  display: flex;
+  flex: none;
+  padding: 8px;
+}
+
+.sidebar-new-wide {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 12px;
+  border: 0.5px solid var(--dsw-alias-border-l3, var(--border));
+  border-radius: var(--dsw-radius-md, 12px);
+  background: var(--dsw-alias-button-elevated-fill, var(--bg));
+  color: var(--dsw-alias-label-primary, var(--text));
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 22px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+
+.sidebar-new-wide:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover, var(--bg-hover));
+}
+
+.sidebar-new-wide:disabled {
+  color: var(--dsw-alias-label-dimmed, var(--text-dim));
+  cursor: not-allowed;
+}
+
+.sidebar-new-wide:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* The session's header, under the toolbar: its name in the harness's page
+   type, and the run's two counts as quiet pills beside it. */
+.session-head {
+  container-type: inline-size;
+}
+
+.session-head-pill {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: var(--dsw-radius-sm, 8px);
+  background: var(--dsw-alias-interactive-bg-hover, var(--bg-hover));
+  color: var(--dsw-alias-label-tertiary, var(--text-dim));
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The sidebar's own toolbar, when the files sit below the sessions: the
+   harness gives that column a brand line and one full-width New button, so
+   the toolbar's New cell steps aside rather than standing twice — the
+   brand takes the line, the search keeps its square at the edge. */
+.session-sidebar.is-files-below .sidebar-new-button {
+  display: none;
+}
+
+.session-sidebar.is-files-below .sidebar-brand {
+  font-family: var(--dsw-font-family-brand);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-left: 10px;
+  padding: 2px 4px;
+}
+
+.session-sidebar.is-files-below .sidebar-search-toggle {
+  margin-left: auto;
+}
+
+/* Project headers: the harness states them as a quiet name in the row type,
+   not as a bold label; the rows' 13px keeps the column's one rhythm. */
+.session-tree-group-toggle {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.session-tree.is-mobile .session-tree-group-toggle {
+  font-size: 14px;
+}
+
+/* The selected row carries the harness's filled nav item; the hairline bar
+   at its edge is dropped — the fill alone says where you are. */
+.session-tree-session.is-selected:not(.is-confirming)::before {
+  display: none;
+}
+
+/* The panels the app itself offers, listed above the workspace as the harness
+   lists its own (SidebarRoot .panelList / .panelRow): 32px rows, a 12px
+   corner, 2px apart, in the sidebar's 8px inset, filling only under the
+   pointer or while they are the open one. */
+.sidebar-panel-rows {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 8px 8px;
+}
+
+.sidebar-panel-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 4px 0 9px;
+  border: 0;
+  border-radius: var(--dsw-radius-md, 12px);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary, var(--text-muted));
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 22px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+
+.sidebar-panel-row:hover,
+.sidebar-panel-row.is-active {
+  background: var(--dsw-alias-interactive-bg-hover, var(--bg-hover));
+  color: var(--dsw-alias-label-primary, var(--text));
+}
+
+.sidebar-panel-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.sidebar-panel-row-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The section name over the workspace (SidebarRoot's group label): 12px, the
+   tertiary label, uppercase-spaced, sitting at the rows' text column. */
+.sidebar-section-label {
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px 0 15px;
+  color: var(--dsw-alias-label-tertiary, var(--text-dim));
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* The brand row: the harness gives it room for an 18px wordmark (48px tall),
+   above the new-session button rather than sharing the chat bar's line. */
+.session-sidebar.is-files-below .sidebar-header {
+  height: 48px;
+  border-bottom: 0;
+}
+
+/* The footer list closes the column the way the harness's does: a hairline
+   above it, so the rows under the workspace read as the sidebar's own. */
+.session-sidebar.is-files-below + div {
+  border-top: 0.5px solid var(--dsw-alias-border-l3, var(--border));
+}
+
+/* The files drawer is gone from the column: the workspace is chosen in a
+   dialog, so the section below the sessions stays closed for good. */
+.session-sidebar.is-files-below .sidebar-files-section,
+.session-sidebar.is-files-below .sidebar-files-resize-handle {
+  display: none;
+}
+
+/* The workspace dialog the footer's "Open another project…" opens: the
+   harness's menu as a centered card, its rows the 32px ones. */
+.workspace-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dsw-alias-bg-mask-1, rgba(0, 0, 0, 0.24));
+}
+
+.workspace-dialog {
+  display: flex;
+  flex-direction: column;
+  min-width: 340px;
+  max-width: min(440px, calc(100vw - 48px));
+  max-height: min(480px, calc(100dvh - 96px));
+  padding: 16px;
+  border: 0;
+  border-radius: var(--dsw-radius-panel, 28px);
+  background: var(--dsw-alias-bg-base, var(--bg));
+  box-shadow: var(--dsw-elevation-prominent, 0 16px 48px rgba(0, 0, 0, 0.22));
+}
+
+.workspace-dialog-title {
+  flex: none;
+  padding: 0 8px 10px;
+  color: var(--dsw-alias-label-primary, var(--text));
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.workspace-dialog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+.workspace-dialog-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--dsw-radius-md, 12px);
+  background: transparent;
+  color: var(--dsw-alias-label-primary, var(--text));
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 22px;
+  text-align: left;
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.workspace-dialog-item:hover {
+  background: var(--dsw-alias-interactive-bg-hover, var(--bg-hover));
+}
+
+.workspace-dialog-item.is-current {
+  background: var(--dsw-specific-sidebar-nav-item-active, var(--bg-selected));
+}
+
+.workspace-dialog-item-label {
+  flex: none;
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-dialog-item-path {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsw-alias-label-tertiary, var(--text-dim));
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.workspace-dialog-separator {
+  flex: none;
+  height: 0.5px;
+  margin: 6px 4px;
+  background: var(--dsw-alias-border-l2, var(--border));
+}
+
+/* The files panel itself is gone with it: the column is the session list
+   alone, and the workspace is chosen in the dialog. */
+.session-sidebar.is-files-below .sidebar-files-panel,
+.session-sidebar.is-files-below .sidebar-files-body {
+  display: none;
+}

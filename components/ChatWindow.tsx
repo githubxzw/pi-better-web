@@ -1453,9 +1453,9 @@ function NoticeShelf({ notices, floating = false, onPauseChange }: { notices: No
     >
       {notices.map((notice, index) => {
         const color = notice.type === "error"
-          ? "#ef4444"
+          ? "var(--dsw-alias-state-error-primary, #ef4444)"
           : notice.type === "warning"
-            ? "#d97706"
+            ? "var(--dsw-alias-state-warn-primary, #d97706)"
             : notice.type === "success"
               ? "#10b981"
               : "var(--accent)";

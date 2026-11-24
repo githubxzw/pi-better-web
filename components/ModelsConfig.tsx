@@ -312,7 +312,7 @@ function SecretTextInput({
 
 function NumInput({ value, onChange, placeholder, invalid }: { value: string; onChange: (v: string) => void; placeholder?: string; invalid?: boolean }) {
   return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-    aria-invalid={invalid || undefined} style={invalid ? { ...inputStyle, borderColor: "#ef4444" } : inputStyle} />;
+    aria-invalid={invalid || undefined} style={invalid ? { ...inputStyle, borderColor: "var(--dsw-alias-state-error-primary, #ef4444)" } : inputStyle} />;
 }
 
 function Select({ value, onChange, options, required }: { value: string; onChange: (v: string) => void; options: readonly string[]; required?: boolean }) {
@@ -498,7 +498,7 @@ function ProviderDetail({ name, editingName, fallbackLabel, provider, onChange, 
         )}
 
         {discoveryState.phase === "error" && (
-          <div style={{ padding: "7px 9px", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 5, color: "#ef4444", fontSize: 11, lineHeight: 1.4 }}>
+          <div style={{ padding: "7px 9px", border: "1px solid color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef4444) 30%, transparent)", borderRadius: 5, color: "var(--dsw-alias-state-error-primary, #ef4444)", fontSize: 11, lineHeight: 1.4 }}>
             {discoveryState.message}
           </div>
         )}
@@ -648,7 +648,7 @@ function ThinkingLevelMapEditor({
           fontWeight: 600,
         };
         const btnActiveDisabled: React.CSSProperties = {
-          background: "#ef4444",
+          background: "var(--dsw-alias-state-error-primary, #ef4444)",
           color: "#fff",
           fontWeight: 600,
         };
@@ -781,9 +781,9 @@ function HeaderListEditor({ headers, onChange }: {
   const rowBtnStyle = {
     padding: "6px 9px",
     background: "none",
-    border: "1px solid rgba(239,68,68,0.3)",
+    border: "1px solid color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef4444) 30%, transparent)",
     borderRadius: 4,
-    color: "#ef4444",
+    color: "var(--dsw-alias-state-error-primary, #ef4444)",
     cursor: "pointer",
     fontSize: 11,
     lineHeight: 1,
@@ -1037,9 +1037,9 @@ function ModelDetail({
     ? catalogState.message
     : catalogResultSummary;
   const catalogStatusColor = catalogState.phase === "error"
-    ? "#ef4444"
+    ? "var(--dsw-alias-state-error-primary, #ef4444)"
     : catalogState.phase === "success" && catalogState.recommendation.price.status === "unreliable"
-      ? "#d97706"
+      ? "var(--dsw-alias-state-warn-primary, #d97706)"
       : "var(--text-dim)";
   const costFields = [
     { key: "input", label: t("models.costInput") },
@@ -1235,7 +1235,7 @@ function ModelDetail({
                 </Field>
               ))}
               {hasModelCostDraftValue(costDraft) && !parseCompleteModelCost(costDraft) && (
-                <div aria-live="polite" style={{ gridColumn: "1 / -1", color: "#d97706", fontSize: 10 }}>
+                <div aria-live="polite" style={{ gridColumn: "1 / -1", color: "var(--dsw-alias-state-warn-primary, #d97706)", fontSize: 10 }}>
                   {t("models.costAllRequired")}
                 </div>
               )}

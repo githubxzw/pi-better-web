@@ -58,6 +58,10 @@ export function SelectorRow({
       }}
       style={{
         position: "relative",
+        /* DSH menu rows are rounded and inset from the panel's edge, so the
+           hover fill never runs into the popover's corners. */
+        margin: "0 4px",
+        borderRadius: "var(--dsw-radius-sm, 8)",
         background: active ? "var(--bg-selected)" : hovered ? "var(--bg-hover)" : "transparent",
         transition: "background 0.1s",
       }}
@@ -110,8 +114,8 @@ export function SelectorRow({
             position: "absolute", top: "50%", right: 6, transform: "translateY(-50%)",
             display: "flex", alignItems: "center", justifyContent: "center",
             width: 24, height: 24, padding: 0,
-            background: "var(--bg-hover)", border: "1px solid var(--border)",
-            borderRadius: 6, color: "var(--text-muted)",
+            background: "var(--bg-hover)", border: "0.5px solid var(--border)",
+            borderRadius: "var(--dsw-radius-sm, 8)", color: "var(--text-muted)",
             cursor: "pointer",
             opacity: showSave ? 1 : 0,
             pointerEvents: showSave ? "auto" : "none",
@@ -120,7 +124,7 @@ export function SelectorRow({
           onMouseEnter={(event) => {
             event.currentTarget.style.background = "var(--bg-selected)";
             event.currentTarget.style.color = "var(--accent)";
-            event.currentTarget.style.borderColor = "rgba(37,99,235,0.35)";
+            event.currentTarget.style.borderColor = "color-mix(in srgb, var(--accent) 35%, transparent)";
           }}
           onMouseLeave={(event) => {
             event.currentTarget.style.background = "var(--bg-hover)";

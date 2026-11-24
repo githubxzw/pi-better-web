@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { ToolEntry } from "@/lib/tool-presets";
+import { TopPanelCloseButton } from "./TopPanelCloseButton";
 
 type Translate = (key: string, params?: Record<string, string | number>) => string;
 
@@ -9,6 +10,8 @@ interface Props {
   loading: boolean;
   tools: ToolEntry[] | null;
   translate: Translate;
+  /** Dismisses the panel; the × in the header. */
+  onClose?: () => void;
 }
 
 interface ParameterField {
@@ -95,7 +98,7 @@ function EmptyState({ children }: { children: string }) {
   return <div className="tool-definitions-empty">{children}</div>;
 }
 
-export function ToolDefinitionsPanel({ loading, tools, translate }: Props) {
+export function ToolDefinitionsPanel({ loading, tools, translate, onClose }: Props) {
   // What the model is sent: under codemode's "only" mode the active built-in tools are reached
   // from scripts, and codemode's description lists them.
   const declaredTools = useMemo(
@@ -119,107 +122,144 @@ export function ToolDefinitionsPanel({ loading, tools, translate }: Props) {
 
   return (
     <div className="tool-definitions-panel">
-      <nav className="tool-definitions-sidebar" aria-label={translate("tools.title")}>
-        <div className="tool-definitions-list">
-          {declaredTools && declaredTools.length > 0 ? declaredTools.map((tool) => {
-            const selected = tool.name === selectedTool?.name;
-            return (
-              <button
-                key={tool.name}
-                type="button"
-                className={`tool-definitions-item${selected ? " selected" : ""}`}
-                aria-pressed={selected}
-                onClick={() => setSelectedToolName(tool.name)}
-              >
-                <code>{tool.name}</code>
-              </button>
-            );
-          }) : declaredTools ? (
-            <EmptyState>{translate("tools.noTools")}</EmptyState>
-          ) : (
-            <EmptyState>{loading ? translate("tools.loading") : translate("tools.load")}</EmptyState>
-          )}
-        </div>
-      </nav>
-
-      <section className="tool-definition-detail" aria-label={translate("tools.details")}>
-        {selectedTool ? (
-          <div className="tool-definition-scroll">
-            {selectedTool.description && (
-              <section className="tool-definition-section">
-                <div className="tool-definition-section-label">{translate("tools.description")}</div>
-                <div className="tool-definition-description">{selectedTool.description}</div>
-              </section>
-            )}
-
-            <section className="tool-definition-section">
-              <div className="tool-definition-section-label">
-                <span>{translate("tools.parameters")}</span>
-                <span>{translate("tools.parameterCount", { count: fields.length })}</span>
-              </div>
-              {fields.length > 0 ? (
-                <div className="tool-definition-fields">
-                  {fields.map((field) => (
-                    <div className="tool-definition-field" key={field.name}>
-                      <div className="tool-definition-field-name">
-                        <code>{field.name}</code>
-                        <span className={field.required ? "required" : undefined}>
-                          {translate(field.required ? "tools.required" : "tools.optional")}
-                        </span>
-                      </div>
-                      <div className="tool-definition-field-value">
-                        <code className="tool-definition-type">{field.type}</code>
-                        {field.description && <div>{field.description}</div>}
-                        {field.allowedValues && (
-                          <div className="tool-definition-meta">
-                            {translate("tools.allowedValues")}: <code>{field.allowedValues}</code>
-                          </div>
-                        )}
-                        {field.defaultValue !== undefined && (
-                          <div className="tool-definition-meta">
-                            {translate("tools.defaultValue")}: <code>{field.defaultValue}</code>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="tool-definition-no-parameters">{translate("tools.noParameters")}</div>
-              )}
-            </section>
-
-            {selectedTool.promptGuidelines && selectedTool.promptGuidelines.length > 0 && (
-              <section className="tool-definition-section">
-                <div className="tool-definition-section-label">{translate("tools.guidelines")}</div>
-                <ul className="tool-definition-guidelines">
-                  {selectedTool.promptGuidelines.map((guideline, index) => (
-                    <li key={`${selectedTool.name}:${index}`}>{guideline}</li>
-                  ))}
-                </ul>
-              </section>
+      <div className="tool-definitions-header">
+        <strong>{translate("tools.title")}</strong>
+        {onClose && <TopPanelCloseButton label={translate("i18n.close")} onClick={onClose} />}
+      </div>
+      <div className="tool-definitions-body">
+        <nav className="tool-definitions-sidebar" aria-label={translate("tools.title")}>
+          <div className="tool-definitions-list">
+            {declaredTools && declaredTools.length > 0 ? declaredTools.map((tool) => {
+              const selected = tool.name === selectedTool?.name;
+              return (
+                <button
+                  key={tool.name}
+                  type="button"
+                  className={`tool-definitions-item${selected ? " selected" : ""}`}
+                  aria-pressed={selected}
+                  onClick={() => setSelectedToolName(tool.name)}
+                >
+                  <code>{tool.name}</code>
+                </button>
+              );
+            }) : declaredTools ? (
+              <EmptyState>{translate("tools.noTools")}</EmptyState>
+            ) : (
+              <EmptyState>{loading ? translate("tools.loading") : translate("tools.load")}</EmptyState>
             )}
           </div>
-        ) : (
-          <EmptyState>
-            {declaredTools
-              ? translate("tools.noTools")
-              : loading
-                ? translate("tools.loading")
-                : translate("tools.load")}
-          </EmptyState>
-        )}
-      </section>
+        </nav>
+
+        <section className="tool-definition-detail" aria-label={translate("tools.details")}>
+          {selectedTool ? (
+            <div className="tool-definition-scroll">
+              {selectedTool.description && (
+                <section className="tool-definition-section">
+                  <div className="tool-definition-section-label">{translate("tools.description")}</div>
+                  <div className="tool-definition-description">{selectedTool.description}</div>
+                </section>
+              )}
+  
+              <section className="tool-definition-section">
+                <div className="tool-definition-section-label">
+                  <span>{translate("tools.parameters")}</span>
+                  <span>{translate("tools.parameterCount", { count: fields.length })}</span>
+                </div>
+                {fields.length > 0 ? (
+                  <div className="tool-definition-fields">
+                    {fields.map((field) => (
+                      <div className="tool-definition-field" key={field.name}>
+                        <div className="tool-definition-field-name">
+                          <code>{field.name}</code>
+                          <span className={field.required ? "required" : undefined}>
+                            {translate(field.required ? "tools.required" : "tools.optional")}
+                          </span>
+                        </div>
+                        <div className="tool-definition-field-value">
+                          <code className="tool-definition-type">{field.type}</code>
+                          {field.description && <div>{field.description}</div>}
+                          {field.allowedValues && (
+                            <div className="tool-definition-meta">
+                              {translate("tools.allowedValues")}: <code>{field.allowedValues}</code>
+                            </div>
+                          )}
+                          {field.defaultValue !== undefined && (
+                            <div className="tool-definition-meta">
+                              {translate("tools.defaultValue")}: <code>{field.defaultValue}</code>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="tool-definition-no-parameters">{translate("tools.noParameters")}</div>
+                )}
+              </section>
+  
+              {selectedTool.promptGuidelines && selectedTool.promptGuidelines.length > 0 && (
+                <section className="tool-definition-section">
+                  <div className="tool-definition-section-label">{translate("tools.guidelines")}</div>
+                  <ul className="tool-definition-guidelines">
+                    {selectedTool.promptGuidelines.map((guideline, index) => (
+                      <li key={`${selectedTool.name}:${index}`}>{guideline}</li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
+          ) : (
+            <EmptyState>
+              {declaredTools
+                ? translate("tools.noTools")
+                : loading
+                  ? translate("tools.loading")
+                  : translate("tools.load")}
+            </EmptyState>
+          )}
+        </section>
+      </div>
 
       <style>{`
+        /* The same dropdown card as SystemPromptPanel: the harness's menu
+           surface on a hairline, floating on the prominent elevation. */
         .tool-definitions-panel {
-          display: grid;
-          grid-template-columns: clamp(112px, 26%, 220px) minmax(0, 1fr);
-          height: min(600px, 75dvh);
+          display: flex;
+          flex-direction: column;
+          /* A fixed height, so the card keeps still while another tool is chosen;
+             within what AppShell leaves under the top bar (--top-panel-max-height). */
+          height: min(600px, 75dvh, var(--top-panel-max-height, 75dvh));
           min-height: 240px;
           overflow: hidden;
-          background: var(--bg-panel);
-          border-bottom: 1px solid var(--border);
+          margin: 6px 8px 0;
+          border: 0.5px solid var(--dsw-alias-border-l3, var(--border));
+          border-radius: var(--dsw-radius-md, 12px);
+          background: var(--dsw-specific-menu, var(--bg));
+          -webkit-backdrop-filter: var(--dsw-menu-backdrop-filter, none);
+          backdrop-filter: var(--dsw-menu-backdrop-filter, none);
+          box-shadow: var(--dsw-elevation-prominent, 0 10px 28px rgba(0, 0, 0, 0.10));
+        }
+        .tool-definitions-header {
+          display: flex;
+          flex: none;
+          align-items: center;
+          gap: 8px;
+          min-height: 44px;
+          padding: 7px 10px 7px 16px;
+          border-bottom: 0.5px solid var(--dsw-alias-border-l2, var(--border));
+          color: var(--text);
+          font-size: 12px;
+        }
+        .tool-definitions-header strong {
+          flex: 1;
+          min-width: 0;
+          font-weight: 600;
+        }
+        .tool-definitions-body {
+          display: grid;
+          grid-template-columns: clamp(112px, 26%, 220px) minmax(0, 1fr);
+          min-height: 0;
+          flex: 1;
         }
         .tool-definitions-sidebar,
         .tool-definition-detail {
@@ -229,8 +269,9 @@ export function ToolDefinitionsPanel({ loading, tools, translate }: Props) {
           flex-direction: column;
         }
         .tool-definitions-sidebar {
-          border-right: 1px solid var(--border);
+          border-right: 0.5px solid var(--dsw-alias-border-l2, var(--border));
           background: color-mix(in srgb, var(--bg-panel) 94%, var(--bg));
+          padding: 6px;
         }
         .tool-definitions-list,
         .tool-definition-scroll {
@@ -238,26 +279,27 @@ export function ToolDefinitionsPanel({ loading, tools, translate }: Props) {
           flex: 1;
           overflow: auto;
         }
+        /* Rows like the sidebar's: rounded, filled only under the pointer or
+           as the chosen one — no divider lines, no edge bar. */
         .tool-definitions-item {
           display: flex;
           width: 100%;
-          min-height: 38px;
+          min-height: 32px;
           align-items: center;
-          padding: 8px 12px;
+          padding: 6px 10px;
           border: none;
-          border-bottom: 1px solid var(--border);
+          border-radius: var(--dsw-radius-sm, 8px);
           background: transparent;
           color: var(--text-muted);
           cursor: pointer;
           text-align: left;
         }
         .tool-definitions-item:hover {
-          background: var(--bg-hover);
+          background: var(--dsw-alias-interactive-bg-hover, var(--bg-hover));
           color: var(--text);
         }
         .tool-definitions-item.selected {
-          background: var(--bg-selected);
-          box-shadow: inset 2px 0 0 var(--accent);
+          background: var(--dsw-specific-sidebar-nav-item-active, var(--bg-selected));
           color: var(--text);
         }
         .tool-definitions-item code {
@@ -295,14 +337,14 @@ export function ToolDefinitionsPanel({ loading, tools, translate }: Props) {
           white-space: pre-wrap;
         }
         .tool-definition-fields {
-          border-top: 1px solid var(--border);
+          border-top: 0.5px solid var(--dsw-alias-border-l2, var(--border));
         }
         .tool-definition-field {
           display: grid;
           grid-template-columns: minmax(88px, 0.75fr) minmax(0, 1.5fr);
           gap: 12px;
           padding: 9px 0;
-          border-bottom: 1px solid var(--border);
+          border-bottom: 0.5px solid var(--dsw-alias-border-l2, var(--border));
           font-size: 11px;
           line-height: 1.45;
         }
@@ -359,19 +401,44 @@ export function ToolDefinitionsPanel({ loading, tools, translate }: Props) {
           font-style: italic;
           overflow-wrap: anywhere;
         }
+        /* A phone's card cannot hold a side column and the details: the column
+           leaves the details under 250px at 390px wide. The tools become one row
+           of chips under the header and the details take the whole width. */
         @media (max-width: 640px) {
-          .tool-definitions-panel {
-            grid-template-columns: 112px minmax(0, 1fr);
+          .tool-definitions-body {
+            grid-template-columns: minmax(0, 1fr);
+            grid-template-rows: auto minmax(0, 1fr);
+          }
+          .tool-definitions-sidebar {
+            padding: 8px 8px 6px;
+            border-right: none;
+            border-bottom: 0.5px solid var(--dsw-alias-border-l2, var(--border));
+          }
+          .tool-definitions-list {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            overflow-y: hidden;
           }
           .tool-definitions-item {
-            padding: 8px 10px;
+            flex: none;
+            width: auto;
+            min-height: 36px;
+            padding: 8px 12px;
+          }
+          .tool-definitions-item code {
+            font-size: 12px;
+            white-space: nowrap;
+          }
+          .tool-definitions-empty {
+            padding: 6px 8px;
           }
           .tool-definition-scroll {
-            padding: 12px;
+            padding: 14px;
           }
           .tool-definition-field {
-            grid-template-columns: minmax(74px, 0.7fr) minmax(0, 1.3fr);
-            gap: 9px;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 4px;
           }
         }
       `}</style>

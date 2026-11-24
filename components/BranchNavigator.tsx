@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import type { BranchPreview, SessionEntry, SessionTreeNode } from "@/lib/types";
 import { useI18n } from "@/hooks/useI18n";
+import { TopPanelCloseButton } from "./TopPanelCloseButton";
 
 interface Props {
   tree: SessionTreeNode[];
@@ -207,9 +208,9 @@ function TreeNodeView({ node, activePathIds, depth, isLast, parentLines, onSelec
             fontSize: 9,
             fontFamily: "var(--font-mono)",
             color: role === "user" ? "var(--accent)" : "var(--text-dim)",
-            background: role === "user" ? "rgba(37,99,235,0.08)" : "var(--bg-hover)",
-            border: `1px solid ${role === "user" ? "rgba(37,99,235,0.2)" : "var(--border)"}`,
-            borderRadius: 3,
+            background: role === "user" ? "color-mix(in srgb, var(--dsw-alias-link, #2563eb) 8%, transparent)" : "var(--bg-hover)",
+            border: `0.5px solid ${role === "user" ? "color-mix(in srgb, var(--dsw-alias-link, #2563eb) 20%, transparent)" : "var(--dsw-alias-border-l2, var(--border))"}`,
+            borderRadius: "var(--dsw-radius-xs, 4px)",
             padding: "0 4px",
             marginRight: 5,
             flexShrink: 0,
@@ -321,47 +322,71 @@ export function BranchNavigator({ tree, activeLeafId, onLeafChange, inline, cont
 
   if (inline) {
     return (
-      <div style={{ height: "100%", display: "flex", alignItems: "stretch" }}>
+      <div style={{ height: "100%", display: "flex", alignItems: "center" }}>
+        {/* The toolbar's other switches, not a tab: filled while open, no edge line. */}
         <button
           ref={btnRef}
+          type="button"
+          data-top-panel-trigger=""
           onClick={() => onToggle ? onToggle() : setOpenInternal((v) => !v)}
           style={{
             display: hideInlineButton ? "none" : "flex",
             alignItems: "center",
             gap: 6,
-            height: "100%",
-            padding: "0 12px",
+            height: 28,
+            padding: "0 10px",
             background: open ? "var(--bg-selected)" : "none",
             border: "none",
-            borderTop: open ? "2px solid var(--accent)" : "2px solid transparent",
-            borderRight: "1px solid var(--border)",
+            borderRadius: 8,
             cursor: "pointer",
             color: open ? "var(--text)" : "var(--text-muted)",
-            fontSize: 11,
+            fontSize: 13,
             whiteSpace: "nowrap",
             transition: "color 0.1s, background 0.1s",
           }}
           onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.color = open ? "var(--text)" : "var(--text-muted)"; }}
-           title={t("i18n.branches")}
-           aria-label={t("i18n.branches")}
+          title={t("i18n.branches")}
+          aria-label={t("i18n.branches")}
           aria-pressed={open}
         >
           {branchIcon}
-           {!compact && <span>{t("i18n.branches")}</span>}
+          {!compact && <span>{t("i18n.branches")}</span>}
         </button>
         {open && dropdownPos && (
-          <div style={{
-            position: "fixed",
-            top: dropdownPos.top,
-            left: dropdownPos.left,
-            width: dropdownPos.width,
-            background: "var(--bg-panel)",
-            borderBottom: "1px solid var(--border)",
-            zIndex: 500,
-          }}>
+          // The dropdown card the other top panels are: floating under the top bar, inset
+          // 8px from the chat column's edges, with the header that names it and closes it.
+          <div
+            data-top-panel-dropdown=""
+            className="top-panel-enter"
+            style={{
+              position: "fixed",
+              top: dropdownPos.top + 6,
+              left: dropdownPos.left + 8,
+              width: Math.max(0, dropdownPos.width - 16),
+              maxHeight: `calc(100dvh - ${dropdownPos.top + 6}px - 24px)`,
+              overflowY: "auto",
+              border: "0.5px solid var(--dsw-alias-border-l3, var(--border))",
+              borderRadius: "var(--dsw-radius-md, 12px)",
+              background: "var(--dsw-specific-menu, var(--bg))",
+              WebkitBackdropFilter: "var(--dsw-menu-backdrop-filter, none)",
+              backdropFilter: "var(--dsw-menu-backdrop-filter, none)",
+              boxShadow: "var(--dsw-elevation-prominent, 0 10px 28px rgba(0,0,0,0.10))",
+              zIndex: 500,
+            }}
+          >
+            <div style={{
+              position: "sticky", top: 0, zIndex: 1,
+              display: "flex", alignItems: "center", gap: 8, minHeight: 44,
+              padding: "0 10px 0 16px",
+              borderBottom: "0.5px solid var(--dsw-alias-border-l2, var(--border))",
+              background: "var(--dsw-specific-menu, var(--bg))",
+            }}>
+              <strong style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 600 }}>{t("i18n.branches")}</strong>
+              <TopPanelCloseButton label={t("i18n.close")} onClick={() => (onToggle ? onToggle() : setOpenInternal(false))} />
+            </div>
             {hasContent ? (
-              <div style={{ padding: "4px 12px 8px 12px", maxHeight: 260, overflowY: "auto" }}>
+              <div style={{ padding: "6px 8px 8px", maxHeight: 260, overflowY: "auto" }}>
                 {lockedNotice}
                 {topLevel.map((child, idx) => (
                   <TreeNodeView
@@ -376,7 +401,7 @@ export function BranchNavigator({ tree, activeLeafId, onLeafChange, inline, cont
                 ))}
               </div>
             ) : (
-              <div style={{ padding: "10px 16px", fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>
+              <div style={{ padding: "10px 16px 14px", fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>
                 {noBranchReason}
               </div>
             )}
@@ -387,7 +412,7 @@ export function BranchNavigator({ tree, activeLeafId, onLeafChange, inline, cont
   }
 
   return (
-    <div style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)", flexShrink: 0, position: "relative" }}>
+    <div style={{ borderBottom: "0.5px solid var(--dsw-alias-border-l2, var(--border))", background: "var(--bg)", flexShrink: 0, position: "relative" }}>
       {/* Header toggle */}
       <button
         onClick={() => setOpenInternal((v) => !v)}
@@ -418,8 +443,8 @@ export function BranchNavigator({ tree, activeLeafId, onLeafChange, inline, cont
           left: 0,
           right: 0,
           background: "var(--bg)",
-          borderBottom: "1px solid var(--border)",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          borderBottom: "0.5px solid var(--dsw-alias-border-l2, var(--border))",
+          boxShadow: "var(--dsw-elevation-prominent, 0 4px 12px rgba(0,0,0,0.1))",
           zIndex: 100,
         }}>
           {hasContent ? (

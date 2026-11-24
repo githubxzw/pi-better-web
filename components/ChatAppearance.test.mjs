@@ -6,8 +6,8 @@ const jiti = createJiti(import.meta.url);
 const { clampChatContentWidth, clampChatContentFontSize, terminalFontSize } = await jiti.import("../hooks/useChatAppearance.ts");
 
 test("chat width validation preserves the default and supported range", () => {
-  assert.equal(clampChatContentWidth(undefined), 820);
-  assert.equal(clampChatContentWidth("invalid"), 820);
+  assert.equal(clampChatContentWidth(undefined), 920);
+  assert.equal(clampChatContentWidth("invalid"), 920);
   assert.equal(clampChatContentWidth(700), 820);
   assert.equal(clampChatContentWidth(1104), 1104);
   assert.equal(clampChatContentWidth(2400), 2000);

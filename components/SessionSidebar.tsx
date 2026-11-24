@@ -118,6 +118,7 @@ import {
   DotOutlineIcon,
   EyeIcon,
   FolderIcon,
+  FolderPlusIcon,
   MessageIcon,
   MoreIcon,
   ForkIcon,
@@ -257,7 +258,16 @@ interface Props {
   hiddenFinishedSessionIds?: Set<string>;
   onRunningSessionIdsChange?: (ids: Set<string>) => void;
   onSessionsChange?: (sessions: SessionInfo[]) => void;
+  /**
+   * The app's own panels, listed as the harness lists its own above the
+   * workspace: rows, not toolbar cells. Absent, nothing of the kind shows.
+   */
+  onOpenPanel?: (panel: SidebarPanelId) => void;
+  activePanel?: SidebarPanelId | null;
 }
+
+/** The app panels a sidebar row opens (`onOpenPanel`). */
+export type SidebarPanelId = "agents" | "system" | "tools";
 
 /**
  * How the bar above a fresh composer (components/NewSessionContextBar.tsx)
@@ -516,7 +526,7 @@ function buttonAnchor(element: HTMLElement, align: "start" | "end"): SidebarMenu
   return { kind: "rect", rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom }, align };
 }
 
-export function SessionSidebar({ selectedSessionId, onSelectSession, onSelectSideChat, onNewSession, controlRef, onNewSessionContextChange, initialSessionId, initialSessionLinked, skipInitialProjectSelection, onInitialRestoreDone, refreshKey, onSessionDeleted, selectedCwd: selectedCwdProp, onCwdChange, onOpenFile, onOpenTerminal, explorerRefreshKey, onExplorerRefresh, onAtMention, onAtMentions, onBackgroundTaskDone, hiddenFinishedSessionIds, onRunningSessionIdsChange, onSessionsChange }: Props) {
+export function SessionSidebar({ selectedSessionId, onSelectSession, onSelectSideChat, onNewSession, controlRef, onNewSessionContextChange, initialSessionId, initialSessionLinked, skipInitialProjectSelection, onInitialRestoreDone, refreshKey, onSessionDeleted, selectedCwd: selectedCwdProp, onCwdChange, onOpenFile, onOpenTerminal, explorerRefreshKey, onExplorerRefresh, onAtMention, onAtMentions, onBackgroundTaskDone, hiddenFinishedSessionIds, onRunningSessionIdsChange, onSessionsChange, onOpenPanel, activePanel }: Props) {
   const { t } = useI18n();
   const isMobile = useIsMobile();
   const [allSessions, setAllSessions] = useState<SessionInfo[]>([]);
@@ -539,6 +549,9 @@ export function SessionSidebar({ selectedSessionId, onSelectSession, onSelectSid
   const [validatedProject, setValidatedProject] = useState<ValidatedProject | null>(null);
   // The files tab's project and worktree picker.
   const filesPickerRef = useRef<ProjectWorktreePickerHandle>(null);
+  // The workspace dialog the footer's "Open another project…" opens: the
+  // known projects, then the two ways to reach any other folder.
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const [worktreeState, setWorktreeState] = useState<WorktreeState | null>(null);
   const [worktreeLoadingCwd, setWorktreeLoadingCwd] = useState<string | null>(null);
   // Folders the listing last found outside any git repository, loaded from
@@ -2518,7 +2531,7 @@ export function SessionSidebar({ selectedSessionId, onSelectSession, onSelectSid
   };
 
   const handleOpenOtherProject = () => {
-    revealFiles("project-list");
+    setProjectDialogOpen(true);
   };
   // Once the files show, the project button takes the focus, or its menu
   // opens below it (the menu takes the focus: its filter or first project),
@@ -3040,6 +3053,59 @@ export function SessionSidebar({ selectedSessionId, onSelectSession, onSelectSid
           onSelect={(path) => void commitCustomPath(path)}
         />
       )}
+      {/* The workspace dialog: the known projects first, then the two ways to
+          reach any other folder. A pick closes it like the menu it replaces. */}
+      {projectDialogOpen && (
+        <div className="workspace-dialog-backdrop" onClick={() => setProjectDialogOpen(false)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("sidebar.openOtherProject")}
+            className="workspace-dialog"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => { if (event.key === "Escape") setProjectDialogOpen(false); }}
+          >
+            <div className="workspace-dialog-title">{t("sidebar.openOtherProject")}</div>
+            <div className="workspace-dialog-list">
+              {projectChoiceList.map((choice) => (
+                <button
+                  key={choice.key}
+                  type="button"
+                  className={`workspace-dialog-item${selectedCwd && choice.root === selectedProject?.root ? " is-current" : ""}`}
+                  onClick={() => { setProjectDialogOpen(false); void commitCustomPath(choice.root, { remember: false, purpose: "files" }); }}
+                  title={choice.root}
+                >
+                  <FolderIcon size={14} />
+                  <span className="workspace-dialog-item-label">{choice.alias || choice.root.split("/").pop() || choice.root}</span>
+                  <span className="workspace-dialog-item-path">{shortenPath(choice.root)}</span>
+                </button>
+              ))}
+              <div className="workspace-dialog-separator" role="separator" />
+              <button
+                type="button"
+                className="workspace-dialog-item"
+                onClick={() => { setProjectDialogOpen(false); void handleDefaultCwd(); }}
+              >
+                <FolderIcon size={14} />
+                <span className="workspace-dialog-item-label">{t("sidebar.useDefaultDirectory")}</span>
+              </button>
+              <button
+                type="button"
+                className="workspace-dialog-item"
+                onClick={() => {
+                  setProjectDialogOpen(false);
+                  setCustomPathOpen("files");
+                  setCustomPathError(null);
+                }}
+              >
+                <FolderPlusIcon size={14} />
+                <span className="workspace-dialog-item-label">{t("sidebar.customPath")}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* One toolbar row, in the cells of the chat's top bar beside it (its
           line continues that bar's): Sessions | Files, then New and the
           search of the tab in view. Only the two tabs are the tablist. With
@@ -3122,6 +3188,48 @@ export function SessionSidebar({ selectedSessionId, onSelectSession, onSelectSid
         </button>
       </div>
 
+      {/* Below the toolbar, the one thing the sidebar is for is a full-width
+          button of its own, as the harness has it: the toolbar's own New is
+          a cell of the top bar's line and reads as one. */}
+      {stacked && (
+        <div className="sidebar-new-row">
+          <button
+            type="button"
+            className="sidebar-new-wide"
+            onClick={handleNewSession}
+            disabled={!selectedCwd}
+            title={selectedCwd ? t("sidebar.newSessionTitle", { path: selectedCwd }) : t("sidebar.selectProject")}
+          >
+            <PlusIcon size={13} />
+            <span>{t("sidebar.new")}</span>
+          </button>
+        </div>
+      )}
+
+      {/* The app's own panels, listed as the harness lists its own above the
+          workspace: rows under the new-session button, not toolbar cells. */}
+      {onOpenPanel && (
+        <div className="sidebar-panel-rows">
+          {([
+            { id: "agents" as const, label: t("agentSwitcher.title"), icon: <MessageIcon size={15} /> },
+            { id: "system" as const, label: t("system.label"), icon: <TerminalIcon size={15} /> },
+            { id: "tools" as const, label: t("tools.title"), icon: <ChangesIcon size={15} /> },
+          ]).map((row) => (
+            <button
+              key={row.id}
+              type="button"
+              className={`sidebar-panel-row${activePanel === row.id ? " is-active" : ""}`}
+              data-top-panel-trigger=""
+              onClick={() => onOpenPanel(row.id)}
+              aria-pressed={activePanel === row.id}
+            >
+              {row.icon}
+              <span className="sidebar-panel-row-label">{row.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Sessions: every project's sessions, or the archive. A tab's panel,
           or the top section, always shown, filling what the files leave. */}
       <div
@@ -3155,6 +3263,9 @@ export function SessionSidebar({ selectedSessionId, onSelectSession, onSelectSid
             />
           </div>
         )}
+        {/* The section name the harness sets over the workspace: one quiet
+            line, so the rows under it read as one list. */}
+        {stacked && <div className="sidebar-section-label">{t("sidebar.workspace")}</div>}
         <SessionSearch
           open={sessionSearchOpen}
           query={sessionSearchQuery}
